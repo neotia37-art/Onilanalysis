@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-CANSLIM TERMINAL  v11.0
+CANSLIM TERMINAL  v12.0
 윌리엄 오닐(William J. O'Neil) 기법 통합 투자 참고 터미널
 
 구성
@@ -52,6 +52,7 @@ except Exception:
 
 import contextlib
 import io as _io
+import traceback
 
 HAS_KRX = False
 KRX_NOTE = ""
@@ -290,6 +291,28 @@ NEG_WORDS = ["하향", "부진", "감소", "적자", "소송", "리콜", "제재
 # ════════════════════════════════════════════════════════════════════════════
 # 유틸
 # ════════════════════════════════════════════════════════════════════════════
+@contextlib.contextmanager
+def guard(section):
+    """한 구역에서 예외가 나도 화면 전체가 죽지 않도록 막는다."""
+    try:
+        yield
+    except Exception as e:
+        st.error(f"**{section}** 구역에서 오류가 발생했습니다. "
+                 f"다른 탭은 정상 동작합니다.")
+        st.caption(f"{type(e).__name__}: {str(e)[:300]}")
+        with st.expander("자세한 내용 (개발용)"):
+            st.code("".join(traceback.format_exc())[-3000:])
+
+
+def safe_call(fn, section, default=None, *a, **kw):
+    try:
+        return fn(*a, **kw)
+    except Exception as e:
+        st.session_state.setdefault("_errs", []).append(
+            (section, f"{type(e).__name__}: {str(e)[:200]}"))
+        return default
+
+
 def bday(offset=0):
     """오늘 기준 offset 영업일 (KRX 휴장일은 호출부에서 재시도)"""
     d = datetime.today() - timedelta(days=offset)
@@ -931,8 +954,25 @@ def resolve_ticker(raw):
     return r["code"], r["market"], r["note"], r["candidates"]
 
 
+def _as_series(x):
+    """컬럼명이 중복되면 d[col]이 DataFrame을 돌려준다 — 항상 Series로 좁힌다."""
+    if isinstance(x, pd.DataFrame):
+        return x.iloc[:, 0]
+    return x
+
+
+_COL_ALIAS = {
+    "open": "Open", "adjopen": "Open", "시가": "Open",
+    "high": "High", "adjhigh": "High", "고가": "High",
+    "low": "Low", "adjlow": "Low", "저가": "Low",
+    "close": "Close", "closeprice": "Close", "종가": "Close", "현재가": "Close",
+    "adjclose": "AdjClose", "adjustedclose": "AdjClose", "수정종가": "AdjClose",
+    "volume": "Volume", "vol": "Volume", "거래량": "Volume",
+}
+
+
 def clean_ohlcv(df, need_vol=True):
-    """시세 프레임 정리 — 이 단계를 거치지 않으면 마지막 행 NaN 하나로 전체 분석이 무너진다.
+    """시세 프레임 정리. 이 단계를 거치지 않으면 마지막 행 NaN 하나로 전체 분석이 무너진다.
     반환 (정리된 df, 처리 내역 리스트)"""
     notes = []
     if df is None or len(df) == 0:
@@ -941,77 +981,70 @@ def clean_ohlcv(df, need_vol=True):
 
     # ① 멀티인덱스 컬럼 평탄화
     if isinstance(d.columns, pd.MultiIndex):
-        lv0 = list(d.columns.get_level_values(0))
-        if len({str(x) for x in lv0}) >= 4:
-            d.columns = [str(c[0]) for c in d.columns]
-        else:
-            d.columns = [str(c[-1]) for c in d.columns]
+        lv0 = [str(c[0]) for c in d.columns]
+        lv_last = [str(c[-1]) for c in d.columns]
+        pick = lv0 if len(set(lv0)) >= len(set(lv_last)) else lv_last
+        d.columns = pick
         notes.append("멀티인덱스 컬럼 평탄화")
 
-    # ② 컬럼명 표준화
-    ren = {}
+    # ② 표준 컬럼 매핑 — 같은 표준명에 여러 원본이 걸리면 '첫 번째'만 쓴다.
+    #    (Close와 Adj Close가 함께 오는 경우 rename으로 합치면 중복 컬럼이 생겨 터진다)
+    std = {}
     for c in list(d.columns):
-        s = str(c).strip()
-        low = s.lower().replace(" ", "").replace("_", "")
-        for key, dst in [("open", "Open"), ("high", "High"), ("low", "Low"),
-                         ("close", "Close"), ("volume", "Volume")]:
-            if low == key or low == f"adj{key}":
-                ren[c] = dst
-        for kr, dst in [("시가", "Open"), ("고가", "High"), ("저가", "Low"),
-                        ("종가", "Close"), ("거래량", "Volume")]:
-            if s == kr:
-                ren[c] = dst
-    if ren:
-        d = d.rename(columns=ren)
-    if "Close" not in d.columns:
-        adj = [c for c in d.columns if "adj" in str(c).lower() and "close" in str(c).lower()]
-        if adj:
-            d["Close"] = d[adj[0]]
-            notes.append("Adj Close를 Close로 사용")
-        else:
-            return None, ["Close 컬럼 없음: " + ", ".join(map(str, list(d.columns)[:8]))]
+        s_ = str(c).strip()
+        low = s_.lower().replace(" ", "").replace("_", "")
+        key = _COL_ALIAS.get(low) or _COL_ALIAS.get(s_)
+        if key and key not in std:
+            std[key] = c
 
-    # ③ 숫자 강제 변환 (문자열 섞임 방지)
-    for c in ("Open", "High", "Low", "Close", "Volume"):
-        if c in d.columns:
-            d[c] = pd.to_numeric(d[c], errors="coerce")
+    close_col = std.get("Close") or std.get("AdjClose")
+    if close_col is None:
+        return None, notes + ["Close 컬럼 없음: " + ", ".join(map(str, list(d.columns)[:10]))]
+    if std.get("Close") is None:
+        notes.append("Adj Close를 종가로 사용")
+
+    # ③ 필요한 컬럼만 뽑아 새 프레임 구성 (중복 컬럼 원천 차단)
+    out = pd.DataFrame(index=d.index)
+    out["Close"] = pd.to_numeric(_as_series(d[close_col]), errors="coerce")
+    for k in ("Open", "High", "Low", "Volume"):
+        if k in std:
+            out[k] = pd.to_numeric(_as_series(d[std[k]]), errors="coerce")
 
     # ④ 인덱스 정리
     try:
-        d.index = pd.to_datetime(d.index)
+        out.index = pd.to_datetime(out.index)
     except Exception:
-        return None, ["인덱스를 날짜로 변환 실패"]
-    if getattr(d.index, "tz", None) is not None:
-        d.index = d.index.tz_localize(None)
-    d = d[~d.index.duplicated(keep="last")].sort_index()
+        return None, notes + ["인덱스를 날짜로 변환 실패"]
+    if getattr(out.index, "tz", None) is not None:
+        out.index = out.index.tz_localize(None)
+    out = out[~out.index.duplicated(keep="last")].sort_index()
 
-    # ⑤ 종가 결측 행 제거 — 여기가 핵심.
-    #    yfinance/stooq는 장 시작 전이나 데이터 지연 시 마지막 행을 NaN으로 준다.
-    n0 = len(d)
-    d = d[d["Close"].notna() & np.isfinite(d["Close"]) & (d["Close"] > 0)]
-    if len(d) < n0:
-        notes.append(f"종가 결측·0 행 {n0 - len(d)}건 제거")
-    if len(d) == 0:
+    # ⑤ 종가 결측 행 제거 — 장 시작 전이나 데이터 지연 시 마지막 행이 NaN으로 온다
+    n0 = len(out)
+    out = out[out["Close"].notna() & np.isfinite(out["Close"]) & (out["Close"] > 0)]
+    if len(out) < n0:
+        notes.append(f"종가 결측·0 행 {n0 - len(out)}건 제거")
+    if len(out) == 0:
         return None, notes + ["유효한 종가가 하나도 없음"]
 
-    # ⑥ OHLC 보정 — 없거나 비면 종가로 채움
+    # ⑥ OHLC 보정
     for c in ("Open", "High", "Low"):
-        if c not in d.columns:
-            d[c] = d["Close"]
+        if c not in out.columns:
+            out[c] = out["Close"]
             notes.append(f"{c} 없음 → 종가로 대체")
         else:
-            miss = int(d[c].isna().sum())
+            miss = int(out[c].isna().sum())
             if miss:
-                d[c] = d[c].fillna(d["Close"])
+                out[c] = out[c].fillna(out["Close"])
                 notes.append(f"{c} 결측 {miss}건 종가로 보정")
-    if "Volume" not in d.columns:
-        d["Volume"] = np.nan
+    if "Volume" not in out.columns:
+        out["Volume"] = np.nan
         if need_vol:
             notes.append("거래량 없음 — 거래량 기반 판정 제한")
     else:
-        d["Volume"] = d["Volume"].fillna(0)
+        out["Volume"] = out["Volume"].fillna(0)
 
-    return d[["Open", "High", "Low", "Close", "Volume"]], notes
+    return out[["Open", "High", "Low", "Close", "Volume"]], notes
 
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -1093,7 +1126,7 @@ def load_price(ticker, force_market=None):
                       lambda: yf.download(t, period="max", progress=False,
                                           auto_adjust=True, threads=False)))
         cands.append(("yfinance 10y",
-                      lambda: yf.Ticker(t).history(period="10y", auto_adjust=False)))
+                      lambda: yf.Ticker(t).history(period="10y", auto_adjust=True)))
     if HAS_FDR:
         cands.append(("FinanceDataReader(stooq)", lambda: fdr.DataReader(t)))
     for lab, fn in cands:
@@ -1132,7 +1165,7 @@ def load_indices(market):
                 pass
         if got is None and HAS_YF:
             try:
-                d = yf.Ticker(code).history(start=start, auto_adjust=False)
+                d = yf.Ticker(code).history(start=start, auto_adjust=True)
                 got = naive(d) if d is not None and not d.empty else None
             except Exception:
                 pass
@@ -1682,7 +1715,7 @@ def load_fx():
             log.append(("환율 USD/KRW", "재시도", f"FDR: {type(e).__name__}"))
     if fx is None and HAS_YF:
         try:
-            d = yf.Ticker("KRW=X").history(start=start, auto_adjust=False)
+            d = yf.Ticker("KRW=X").history(start=start, auto_adjust=True)
             if d is not None and len(d) > 500:
                 fx = naive(d)
                 log.append(("환율 USD/KRW", "성공", f"yfinance · {len(fx):,}일"))
@@ -1690,7 +1723,7 @@ def load_fx():
             log.append(("환율 USD/KRW", "실패", type(e).__name__))
     if HAS_YF:
         try:
-            d = yf.Ticker("DX-Y.NYB").history(period="3y", auto_adjust=False)
+            d = yf.Ticker("DX-Y.NYB").history(period="3y", auto_adjust=True)
             if d is not None and len(d) > 200:
                 dxy = naive(d)
                 log.append(("달러인덱스", "성공", "yfinance"))
@@ -4192,7 +4225,16 @@ def sticky_bar(ctx, D, extra=""):
     st.markdown('<div class="stickybar">' + "".join(parts) + '</div>', unsafe_allow_html=True)
 
 
-CTX = build_context(TK, forced_market)
+try:
+    CTX = build_context(TK, forced_market)
+except Exception as _e:
+    CTX = {"ok": False, "name": TK,
+           "log": [("종목 데이터 로드", "실패",
+                    f"{type(_e).__name__}: {str(_e)[:200]}")]}
+    st.error(f"**{TK} 데이터를 불러오는 중 오류가 발생했습니다.** "
+             f"{type(_e).__name__}: {str(_e)[:200]}")
+    with st.expander("자세한 내용 (개발용)"):
+        st.code("".join(traceback.format_exc())[-3000:])
 if CTX.get("ok"):
     CTX["sec_hint"] = st.session_state.get("tk_sec")
 
@@ -4260,14 +4302,24 @@ def derive(ctx, q_over=None, y_over=None):
             "flowinfo": flowinfo}
 
 
-D = derive(CTX) if CTX.get("ok") else {}
+D = {}
+if CTX.get("ok"):
+    try:
+        D = derive(CTX)
+    except Exception as _e2:
+        st.warning(f"지표 계산 중 일부 오류가 있었습니다 "
+                   f"({type(_e2).__name__}). 가능한 항목만 표시합니다.")
+        D = {}
 
 
 # ════════════════════════════════════════════════════════════════════════════
 # TAB 0 — 대시보드
 # ════════════════════════════════════════════════════════════════════════════
-with TABS[0]:
-    if not CTX.get("ok"):
+with TABS[0], guard("대시보드"):
+    if CTX.get("ok") and not D:
+        st.warning("지표 계산에 실패해 요약을 표시할 수 없습니다. "
+                   "개별종목 탭의 '종목 정보 검증'에서 원인을 확인하세요.")
+    if not CTX.get("ok") or not D:
         st.error("시세를 가져오지 못했습니다. 한국 종목은 6자리 숫자(005930), 해외는 티커(NVDA)로 "
                  "입력하세요.")
         if CTX.get("log"):
@@ -4394,8 +4446,8 @@ with TABS[0]:
 # TAB 1 — 시장
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[1]:
-    if not CTX.get("ok") or not CTX["states"]:
+with TABS[1], guard("시장"):
+    if not CTX.get("ok") or not D or not CTX["states"]:
         st.warning("지수 데이터를 불러오지 못했습니다.")
     else:
         states, bw = CTX["states"], CTX["bw"]
@@ -4505,8 +4557,8 @@ with TABS[1]:
 # TAB 3 — 개별종목
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[3]:
-    if not CTX.get("ok"):
+with TABS[3], guard("개별종목"):
+    if not CTX.get("ok") or not D:
         st.error("종목 데이터를 불러오지 못했습니다.")
     else:
         df, market, price, ma = CTX["df"], CTX["market"], CTX["price"], CTX["ma"]
@@ -5356,7 +5408,7 @@ with TABS[3]:
 # TAB 2 — 환율
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[2]:
+with TABS[2], guard("환율"):
     if CTX.get("ok"):
         sticky_bar(CTX, D)
     st.markdown('<div class="masthead"><h1>환율 분석 — USD/KRW</h1><div class="sub">'
@@ -5447,7 +5499,7 @@ with TABS[2]:
 # TAB 5 — 뉴스
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[6]:
+with TABS[6], guard("뉴스"):
     if CTX.get("ok"):
         sticky_bar(CTX, D)
     st.markdown(f'<div class="masthead"><h1>{TK} 뉴스</h1><div class="sub">'
@@ -5502,7 +5554,7 @@ with TABS[6]:
 # TAB 6 — 종목 스캔
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[7]:
+with TABS[7], guard("종목스캔"):
     st.markdown('<div class="masthead"><h1>종목 스캔</h1><div class="sub">'
                 '추가한 종목이 목록에 계속 남습니다</div></div>', unsafe_allow_html=True)
     wl = load_watchlist()
@@ -5583,7 +5635,7 @@ with TABS[7]:
 # TAB 4 — 분석보강 (기본 분석에서 빠지기 쉬운 항목)
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[5]:
+with TABS[5], guard("분석보강"):
     st.markdown('<div class="masthead"><h1>분석보강</h1><div class="sub">'
                 'CANSLIM 본체에는 없지만 실패를 줄이는 항목들</div></div>', unsafe_allow_html=True)
     if not CTX.get("ok"):
@@ -5795,7 +5847,7 @@ with TABS[5]:
 # TAB 8 — 사용 가이드
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[9]:
+with TABS[9], guard("사용 가이드"):
     st.markdown('<div class="masthead"><h1>사용 가이드</h1><div class="sub">'
                 '오닐 기법과 이 앱을 함께 읽는 법</div></div>', unsafe_allow_html=True)
 
@@ -5977,7 +6029,7 @@ ROE·영업이익률·부채비율·분기 손익계산서를 대신 채웁니�
 # TAB 7 — my투자
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[8]:
+with TABS[8], guard("my투자"):
     st.markdown('<div class="masthead"><h1>my투자</h1><div class="sub">'
                 '보유 종목 오늘의 전략 · 누적 수익률 관리</div></div>', unsafe_allow_html=True)
     port = load_portfolio()
@@ -6171,7 +6223,7 @@ with TABS[8]:
 # TAB 4 — 차트스쿨
 # ════════════════════════════════════════════════════════════════════════════
     to_top()
-with TABS[4]:
+with TABS[4], guard("차트스쿨"):
     if not CTX.get("ok"):
         st.info("종목을 먼저 입력하세요.")
     else:
@@ -6373,3 +6425,4 @@ with TABS[4]:
                     '모양이 보이게 됩니다. 오닐도 "수천 개의 차트를 직접 그려봤다"고 했습니다.</div>',
                     unsafe_allow_html=True)
     to_top()
+
