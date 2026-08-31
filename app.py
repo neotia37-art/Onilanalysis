@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-CANSLIM TERMINAL  v12.0
+CANSLIM TERMINAL  v13.1
 윌리엄 오닐(William J. O'Neil) 기법 통합 투자 참고 터미널
 
 구성
@@ -1495,8 +1495,28 @@ def load_us_fund(ticker, price=None):
         F["sector"], F["industry"] = info.get("sector"), info.get("industry")
         F["div"] = (safe(info.get("dividendYield")) or 0) or None
         F["eps_ttm"] = safe(info.get("trailingEps"))
+        F["fwd_eps"] = safe(info.get("forwardEps"))
+        F["tgt_mean"] = safe(info.get("targetMeanPrice"))
+        F["tgt_high"] = safe(info.get("targetHighPrice"))
+        F["tgt_low"] = safe(info.get("targetLowPrice"))
+        F["tgt_med"] = safe(info.get("targetMedianPrice"))
+        F["rec_key"] = info.get("recommendationKey")
+        F["rec_mean"] = safe(info.get("recommendationMean"))
+        F["n_analysts"] = safe(info.get("numberOfAnalystOpinions"))
+        F["aum"] = safe(info.get("totalAssets"))
+        F["short_ratio"] = safe(info.get("shortRatio"))
+        F["short_pct"] = (safe(info.get("shortPercentOfFloat")) or 0) * 100 or None
+        F["hi52"] = safe(info.get("fiftyTwoWeekHigh"))
+        F["lo52"] = safe(info.get("fiftyTwoWeekLow"))
+        F["avg_vol"] = safe(info.get("averageVolume")) or safe(info.get("averageDailyVolume10Day"))
+        F["quote_type"] = info.get("quoteType")
+        qgh = safe(info.get("earningsQuarterlyGrowth"))
+        F["q_growth_hint"] = (qgh * 100) if qgh is not None else None
         F["src"].append(isrc)
         F["log"].append(("US 기업정보", "성공", f"{isrc} · {len(info)}개 항목"))
+        if F.get("tgt_mean"):
+            F["log"].append(("컨센 목표가", "성공",
+                             f"평균 {F['tgt_mean']} · 의견 {F.get('n_analysts') or '—'}명"))
     else:
         F["log"].append(("US 기업정보", "부분",
                          f"info 응답 없음({isrc}) — 재무제표로 직접 산출합니다"))
@@ -1517,6 +1537,21 @@ def load_us_fund(ticker, price=None):
             F["next_earnings"] = pd.to_datetime(cal.loc["Earnings Date"].iloc[0])
     except Exception:
         pass
+    try:
+        edf = tk.get_earnings_dates(limit=8)
+        if edf is not None and len(edf):
+            F["earn_hist"] = edf
+            try:
+                tz = getattr(edf.index, "tz", None)
+                now = pd.Timestamp.now(tz=tz) if tz is not None else pd.Timestamp.now()
+                fut = edf[edf.index >= now]
+                if len(fut) and F.get("next_earnings") is None:
+                    F["next_earnings"] = pd.Timestamp(fut.index[0]).to_pydatetime()
+            except Exception:
+                pass
+            F["log"].append(("실적 일정", "성공", f"yfinance earnings_dates · {len(edf)}건"))
+    except Exception as e:
+        F["log"].append(("실적 일정", "부분", type(e).__name__))
     if F.get("q_tab") is not None:
         keep = [r for r in ("매출액", "영업이익", "순이익", "EPS") if r in F["q_tab"].index]
         if keep:
@@ -2172,6 +2207,9 @@ def analyze_base(dfd, market, zp=8.0):
     handle = detect_handle(dfd, cur) if not cur["completed"] else None
     btype, note = classify(dfd, cur, handle)
     flaws = base_flaws(cur, handle, btype)
+    if handle is None and ("핸들 미형성" in (btype or "") or cur.get("completed")):
+        if not any(x[0] == "핸들 미형성" for x in flaws):
+            flaws.append(("핸들 미형성", "없음", "핸들 후 돌파가 정석 — 없으면 가짜돌파 기본값"))
     if handle and handle["ok_depth"] and handle["ok_pos"] and not handle["wedge"]:
         pv_raw, pv_src = handle["high"], "핸들 고점"
     else:
@@ -2192,12 +2230,31 @@ def analyze_base(dfd, market, zp=8.0):
         stage, kind = "연장(Extended) — 추격 금지", "fail"
     vma = dfd["Volume"].rolling(50).mean()
     bo_day, bo_vol = None, None
-    tail = dfd.tail(20)
-    for i in range(1, len(tail)):
-        if tail["Close"].iloc[i] > pivot >= tail["Close"].iloc[i - 1]:
-            bo_day = tail.index[i]
-            v = float(vma.loc[bo_day]) if not np.isnan(vma.loc[bo_day]) else np.nan
-            bo_vol = float(tail["Volume"].iloc[i]) / v if v and v > 0 else np.nan
+    look = dfd.loc[cur["low_date"]:]
+    if len(look) >= 2:
+        for i in range(1, len(look)):
+            prev_c = float(look["Close"].iloc[i - 1])
+            cur_c = float(look["Close"].iloc[i])
+            if cur_c > pivot >= prev_c:
+                bo_day = look.index[i]
+                try:
+                    v = float(vma.loc[bo_day])
+                except Exception:
+                    v = np.nan
+                if v and v == v and v > 0:
+                    bo_vol = float(look["Volume"].iloc[i]) / v
+                else:
+                    bo_vol = np.nan
+                break
+    fake_bo = bool(bo_day is not None and (bo_vol is None or (isinstance(bo_vol, float) and (np.isnan(bo_vol) or bo_vol < 1.4))))
+    if fake_bo:
+        if not any(x[0].startswith("돌파 거래량") for x in flaws):
+            flaws.append(("돌파 거래량 부족", f'{bo_vol:.2f}배' if bo_vol == bo_vol else "—",
+                          "50일 평균 1.4배 — 구간이어도 보류"))
+        if kind == "pass":
+            stage, kind = "거래량 부족 돌파 — 가짜돌파 위험 (보류)", "warn"
+    elif handle is None and kind == "pass":
+        stage = "매수 가능 구간 · 핸들 없음 (포지션 축소)"
     # 과거 돌파 성공률
     wins, tries = 0, 0
     for b in bases[:-1]:
@@ -2211,8 +2268,8 @@ def analyze_base(dfd, market, zp=8.0):
             wins += 1
     return {"bases": bases, "cur": cur, "handle": handle, "type": btype, "note": note,
             "flaws": flaws, "pivot": pivot, "pivot_src": pv_src, "gap": gap, "stage": stage,
-            "kind": kind, "bo_day": bo_day, "bo_vol": bo_vol, "weekly": w,
-            "win": (wins, tries)}
+            "kind": kind, "bo_day": bo_day, "bo_vol": bo_vol, "fake_bo": fake_bo,
+            "weekly": w, "win": (wins, tries)}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -2422,21 +2479,39 @@ def sell_pressure(df, ma, topping, base):
 
 
 def eight_week_rule(df, base):
-    """돌파 후 3주 내 20% 이상 상승 시 8주 보유 규칙"""
-    if not base or base["bo_day"] is None:
+    """돌파 후 3주 내 +20%면 8주 창이 끝날 때까지 규칙을 유지한다.
+    (구버전 버그: days<=21 조건 때문에 3주가 지나면 규칙이 꺼졌음)
+    """
+    if not base or base.get("bo_day") is None:
         return None
     bo = base["bo_day"]
+    if bo not in df.index:
+        loc = df.index.get_indexer([bo], method="nearest")
+        if loc is None or len(loc) == 0 or loc[0] < 0:
+            return None
+        bo = df.index[int(loc[0])]
     seg = df.loc[bo:]
     if len(seg) < 3:
         return None
     w3 = seg.head(16)
-    gain = float(w3["Close"].max() / float(df.loc[bo, "Close"]) - 1) * 100
-    days = (df.index[-1] - bo).days
-    if gain >= 20 and days <= 21:
-        return {"on": True, "gain": gain, "until": bo + pd.Timedelta(days=56),
-                "msg": "돌파 후 3주 내 20% 이상 상승 — 8주 보유 규칙 적용 대상"}
-    return {"on": False, "gain": gain, "days": days,
-            "msg": "8주 보유 규칙 미해당 (일반 익절 규칙 적용)"}
+    raw = df.loc[bo, "Close"]
+    bo_close = float(raw.iloc[-1] if hasattr(raw, "iloc") else raw)
+    if not bo_close or bo_close != bo_close:
+        return None
+    gain = float(w3["Close"].max() / bo_close - 1) * 100
+    days = int((df.index[-1] - bo).days)
+    until = bo + pd.Timedelta(days=56)
+    qualified = gain >= 20
+    active = bool(qualified and df.index[-1] <= until)
+    expired = bool(qualified and df.index[-1] > until)
+    if active:
+        msg = f"돌파 후 3주 내 {gain:.1f}% 상승 — 8주 보유 규칙 적용 중"
+    elif expired:
+        msg = f"8주 보유 만료 (3주 내 +{gain:.1f}%) — 일반 익절 규칙으로 전환"
+    else:
+        msg = f"8주 규칙 미해당 (3주 최고 +{gain:.1f}%, 경과일 {days}일) — 일반 익절"
+    return {"on": active, "qualified": qualified, "expired": expired,
+            "gain": gain, "days": days, "until": until, "msg": msg}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -2721,6 +2796,17 @@ def final_checklist(m_ok, c_ok, a_ok, n_ok, s_ok, l_ok, i_ok, base_ok, binfo, sp
             ("유동성이 충분한가", bool(diag.get("liq_ok")), "정밀 보강 · 거래대금"),
             ("실적 발표까지 5일 이상 남았는가",
              (diag.get("earn_days") is None or diag["earn_days"] > 5), "정밀 보강 · 이벤트")]
+    if binfo:
+        bov = binfo.get("bo_vol")
+        if binfo.get("bo_day") is None:
+            vol_ok = True
+        else:
+            vol_ok = bov is not None and bov == bov and bov >= 1.4
+        rows.append(("돌파 거래량이 1.4배 이상인가", vol_ok, "STEP 2 돌파 거래량"))
+        rows.append(("핸들이 형성되었는가", binfo.get("handle") is not None, "STEP 2 핸들"))
+        vb = (binfo.get("cur") or {}).get("vol_bal")
+        rows.append(("우측 거래량이 좌측의 0.8배 이상인가",
+                     bool(vb is not None and vb == vb and vb >= 0.8), "STEP 2 거래량 균형"))
     return rows
 
 
@@ -3159,9 +3245,12 @@ def position_review(h, zp=8.0):
     peak = float(df.loc[bdate:, "Close"].max()) if len(df.loc[bdate:]) else px
     peak_ret = (peak / buy - 1) * 100
     dd_from_peak = (px / peak - 1) * 100
-    eight = (peak_ret >= 20 and held <= 21)
+    ew = eight_week_rule(df, binfo)
+    eight = bool(ew and ew.get("on"))
     below50 = (not np.isnan(ma[50])) and px < ma[50]
     below200 = (not np.isnan(ma[200])) and px < ma[200]
+    pre_pivot = bool(binfo and buy < float(binfo["pivot"]) * 0.995)
+    to_t1 = (t1 / px - 1) * 100 if px else None
 
     if ret <= -7:
         act, kind, why = "즉시 손절", "fail", f"매수가 대비 {pct(ret)} — 오닐 -7~8% 원칙 도달"
@@ -3170,15 +3259,19 @@ def position_review(h, zp=8.0):
     elif ret <= -4 and below50:
         act, kind, why = "손절 준비", "warn", f"{pct(ret)} · 50일선 이탈 — 반등 실패 시 정리"
     elif eight:
-        act, kind, why = "8주 보유 (익절 금지)", "pass", f"3주 내 최고 {pct(peak_ret)} 달성 — 오닐 8주 규칙 대상"
+        act, kind, why = "8주 보유 (익절 금지)", "pass", (ew["msg"] if ew else f"3주 내 최고 {pct(peak_ret)}")
     elif sp["score"] >= 45:
         act, kind, why = "절반 익절", "warn", "매도 압력 " + str(sp["score"]) + "점"
     elif ret >= 25:
         act, kind, why = "2차 익절 구간", "warn", f"{pct(ret)} — 잔량 정리 또는 50일선 추적"
     elif ret >= 20:
         act, kind, why = "1차 익절 구간", "warn", f"{pct(ret)} — 절반 이상 실현 검토"
+    elif 15 <= ret < 20:
+        act, kind, why = "1차 익절 준비", "warn", f"{pct(ret)} — 오늘 +20%({fmt(t1, market)}) 계획을 적는다. 도달 후 고민하면 늦다"
     elif below200:
         act, kind, why = "비중 축소", "fail", "200일선 아래 — 장기 추세 훼손"
+    elif pre_pivot and binfo and px < binfo["pivot"]:
+        act, kind, why = "피벗 전 예외 진입", "warn", "피벗 도달 전까지는 예외로 기록. 예외가 연속이면 시스템이 아니다"
     elif ret > 0 and not below50:
         act, kind, why = "보유 유지", "pass", f"{pct(ret)} · 50일선 위 유지"
     else:
@@ -3191,7 +3284,8 @@ def position_review(h, zp=8.0):
             "dd_from_peak": dd_from_peak, "sp": sp, "act": act, "kind": kind, "why": why,
             "ma50": ma[50], "ma200": ma[200], "below50": below50, "below200": below200,
             "binfo": binfo, "r_mult": r_mult, "value": px * qty, "cost": buy * qty,
-            "pl": (px - buy) * qty, "top": top}
+            "pl": (px - buy) * qty, "top": top, "eight": ew, "pre_pivot": pre_pivot,
+            "to_t1": to_t1}
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -4052,6 +4146,13 @@ with st.sidebar:
                 st.error(f'{_c3} · 어떤 소스에서도 시세를 찾지 못했습니다. '
                          '코드를 다시 확인하거나 위에서 이름으로 검색하세요.')
     st.markdown("---")
+    if st.button("시세·재무 캐시 새로고침", use_container_width=True, key="btn_refresh_cache"):
+        try:
+            st.cache_data.clear()
+        except Exception:
+            pass
+        st.success("캐시를 비웠습니다. 다음 조회부터 최신 숫자를 다시 받습니다.")
+        st.rerun()
     capital = st.number_input("투자 가능 금액", min_value=0, value=0, step=1000000,
                               help="0이면 수량 계산을 생략합니다")
     risk_pct = st.slider("1회 최대 손실 허용 (%)", 0.5, 3.0, 1.5, 0.1)
@@ -4214,6 +4315,10 @@ def sticky_bar(ctx, D, extra=""):
         k = "up" if binfo["kind"] == "pass" else ("amb" if binfo["kind"] == "warn" else "down")
         parts.append(f'<span class="it">피봇 <b>{fmt(binfo["pivot"], m)}</b> '
                      f'<span class="{k}">{pct(binfo["gap"])}</span></span>')
+        if binfo.get("fake_bo"):
+            parts.append('<span class="it">' + tag("가짜돌파 위험", "fail") + '</span>')
+        elif binfo["kind"] == "fail":
+            parts.append('<span class="it">' + tag("추격 매수 금지", "fail") + '</span>')
     if D:
         parts.append(f'<span class="it">CANSLIM <b>{D["score"]}</b>/100 '
                      f'· RS <b>{ctx.get("rating") or "—"}</b></span>')
@@ -4672,8 +4777,17 @@ with TABS[3], guard("개별종목"):
                         f'{h["days"]}거래일 · 깊이 {h["depth"]:.1f}%'],
                        ["핸들 저점", f'{h["low_date"]:%Y-%m-%d}', fmt(h["low"], market),
                         "이탈 시 베이스 실패"]]
-            tl.append(["돌파 완성" if b["completed"] else "현재 (진행 중)",
-                       f'{b["end"]:%Y-%m-%d}', fmt(price, market),
+            if binfo.get("bo_day") is not None:
+                try:
+                    _bop = df.loc[binfo["bo_day"], "Close"]
+                    bo_px = float(_bop.iloc[-1] if hasattr(_bop, "iloc") else _bop)
+                except Exception:
+                    bo_px = None
+                tl.append(["피봇 돌파일", f'{binfo["bo_day"]:%Y-%m-%d}',
+                           fmt(bo_px, market) if bo_px else "—",
+                           f'거래량 {num(binfo.get("bo_vol"), 2)}배'
+                           + (" · 가짜돌파 위험" if binfo.get("fake_bo") else "")])
+            tl.append(["현재", f'{df.index[-1]:%Y-%m-%d}', fmt(price, market),
                        "베이스 완성" if b["completed"] else f'{b["weeks"]:.0f}주째 형성 중'])
             st.markdown(table(["시점", "날짜", "가격", "비고"], tl), unsafe_allow_html=True)
             st.markdown(cross_section(binfo, price, market), unsafe_allow_html=True)
@@ -4978,6 +5092,12 @@ with TABS[3], guard("개별종목"):
             c[3].markdown(card("ROE / 영업이익률", f'{pct(D["roe"],0,False)} / {pct(D["opm"],0,False)}',
                                "ROE 17% 이상", "up" if (D["roe"] or 0) >= 17 else "mut"),
                           unsafe_allow_html=True)
+
+            if q_g is not None and q_g != 999 and 20 <= q_g < 25:
+                st.markdown(tag("C 미달", "fail") +
+                            ' <span class="hint">+20~25%는 “거의 됐다”가 아니라 <b>미달</b>입니다. '
+                            'C가 25%에 못 미치면 차트를 느슨하게 보지 않습니다.</span>',
+                            unsafe_allow_html=True)
 
             def _fin_rows(tab, market_):
                 if tab is None or tab.empty:
@@ -5647,6 +5767,73 @@ with TABS[5], guard("분석보강"):
         diag = extra_diagnostics(df, market, CTX["binfo"], CTX["fnd"],
                                  CTX.get("bench") if CTX.get("bench") is not None else CTX["lead"],
                                  capital, ma)
+        fndS = CTX.get("fnd") or {}
+
+        step_header("STREET", "컨센 목표가 · 실적 일정 (자동)",
+                    "yfinance 컨센서스 — 평균 목표가 아래에 주가가 있으면 추격 명분이 약하다")
+        if fndS.get("tgt_mean") or fndS.get("next_earnings") or fndS.get("n_analysts"):
+            sc4 = st.columns(4)
+            tm, th, tl_ = fndS.get("tgt_mean"), fndS.get("tgt_high"), fndS.get("tgt_low")
+            gap_t = ((tm / price - 1) * 100) if tm and price else None
+            sc4[0].markdown(card("평균 목표가", fmt(tm, market) if tm else "—",
+                                 (f'현재가 대비 {pct(gap_t)}' if gap_t is not None else "컨센 없음"),
+                                 "down" if (gap_t is not None and gap_t < 0) else "up"),
+                            unsafe_allow_html=True)
+            sc4[1].markdown(card("목표 밴드",
+                                 (f'{fmt(tl_, market) if tl_ else "—"} ~ {fmt(th, market) if th else "—"}'),
+                                 f'의견 {int(fndS["n_analysts"]) if fndS.get("n_analysts") else "—"}명 · '
+                                 f'{fndS.get("rec_key") or "—"}', "amb"),
+                            unsafe_allow_html=True)
+            sc4[2].markdown(card("선행 EPS / PER",
+                                 f'{num(fndS.get("fwd_eps"), 2)} / {num(fndS.get("fper"), 1)}',
+                                 "yfinance forwardEps · forwardPE"), unsafe_allow_html=True)
+            ne = fndS.get("next_earnings")
+            sc4[3].markdown(card("다음 실적",
+                                 (pd.Timestamp(ne).strftime("%Y-%m-%d") if ne is not None else "미확인"),
+                                 (f'{diag.get("earn_days")}일 남음' if diag.get("earn_days") is not None else "일정 미수집")),
+                            unsafe_allow_html=True)
+            if gap_t is not None and gap_t < 0:
+                st.markdown(tag("목표가 잠식", "warn") +
+                            ' <span class="hint">평균 목표가보다 주가가 높습니다. '
+                            '추가 상승은 컨센 상향이 나와야 설득력이 있습니다.</span>',
+                            unsafe_allow_html=True)
+            eh = fndS.get("earn_hist")
+            if eh is not None and hasattr(eh, "head"):
+                try:
+                    show = eh.head(6).copy()
+                    st.dataframe(show, use_container_width=True)
+                except Exception:
+                    pass
+            sc2 = st.columns(4)
+            aum = fndS.get("aum")
+            sc2[0].markdown(card("운용자산(추정)",
+                                 (f"{aum/1e9:.2f}B" if aum and aum >= 1e9 else
+                                  (f"{aum/1e6:.0f}M" if aum else "—")),
+                                 "yfinance totalAssets · 운용사 AUM 대용"),
+                            unsafe_allow_html=True)
+            sc2[1].markdown(card("공매도 비율",
+                                 (f'{num(fndS.get("short_ratio"), 1)}일' if fndS.get("short_ratio") else "—"),
+                                 f'플로트 대비 {num(fndS.get("short_pct"), 1)}%' if fndS.get("short_pct") else "shortRatio"),
+                            unsafe_allow_html=True)
+            sc2[2].markdown(card("52주 밴드",
+                                 f'{fmt(fndS.get("lo52"), market) if fndS.get("lo52") else "—"} ~ '
+                                 f'{fmt(fndS.get("hi52"), market) if fndS.get("hi52") else "—"}',
+                                 "yfinance 52-week"), unsafe_allow_html=True)
+            sc2[3].markdown(card("평균 거래량",
+                                 f'{int(fndS["avg_vol"]):,}' if fndS.get("avg_vol") else "—",
+                                 "averageVolume"), unsafe_allow_html=True)
+            st.caption("AUM 순유입·fee rate·GAAP/조정 EPS 분리는 공시 전용이라 자동이 아닙니다. "
+                       "아래 칸에 직접 적으면 다음 세션까지 이 브라우저에 남습니다.")
+            _mk = f"manual_note_{TK}"
+            _note = st.text_area("수동 메모 (AUM 순유입 / GAAP vs Adj / 방어선)",
+                                 value=st.session_state.get(_mk, ""),
+                                 key=_mk, height=80,
+                                 placeholder="예: 2026-07 AUM $132B · 순유입 +1.2B · fee 0.32% · Adj EPS 사용")
+        else:
+            st.markdown('<div class="hint">컨센 목표가·실적 일정을 자동으로 못 가져왔습니다. '
+                        '해외 종목은 yfinance 한도에 걸리면 비어 있습니다. '
+                        'AUM·순유입처럼 공시 전용 숫자는 자동 반영이 안 됩니다.</div>',
+                        unsafe_allow_html=True)
 
         step_header("RISK", "변동성 · 손절폭 적정성", "고정 -8%가 이 종목에 맞는가")
         c = st.columns(4)
@@ -5823,7 +6010,7 @@ with TABS[5], guard("분석보강"):
                                D["l_ok"], D["i_ok"], D["base_ok"], CTX["binfo"], D["sp"], diag)
         passed = sum(1 for _, ok, _ in rows if ok)
         st.markdown(card("통과 항목", f'{passed} / {len(rows)}',
-                         "10개 이상이면 오닐 기준 진입 가능" + bar(passed, len(rows)),
+                         "점수보다 결함 한 줄 — 거래량·핸들 미달이면 보류" + bar(passed, len(rows)),
                          "up" if passed >= 10 else ("amb" if passed >= 7 else "down")),
                     unsafe_allow_html=True)
         st.markdown("<br>" + table(["점검 항목", "판정", "확인 위치"],
@@ -6035,6 +6222,29 @@ with TABS[8], guard("my투자"):
     port = load_portfolio()
 
     with st.expander("보유 종목 추가", expanded=len(port["open"]) == 0):
+        if st.button("일지 종목 불러오기 (WT·NTAP·HNGE)", key="p_seed_blog"):
+            seeds = [
+                {"ticker": "WT", "date": "2026-08-05", "price": 21.715, "qty": 60,
+                 "memo": "8/5·8/6 평균 · 방어선 20.0 · 20% 계획 26.06"},
+                {"ticker": "NTAP", "date": "2026-08-11", "price": 197.00, "qty": 5,
+                 "memo": "거래량 경고 무시 예외 · 방어선 181"},
+                {"ticker": "HNGE", "date": "2026-08-20", "price": 87.84, "qty": 15,
+                 "memo": "피벗 전 진입 예외 · 방어선 80.8"},
+            ]
+            have = {(x.get("ticker"), str(x.get("date")), float(x.get("price") or 0))
+                    for x in port["open"]}
+            added = 0
+            for sd in seeds:
+                key = (sd["ticker"], sd["date"], sd["price"])
+                if key in have:
+                    continue
+                port["open"].append({"id": f'{sd["ticker"]}-SEED-{sd["date"]}', **sd})
+                added += 1
+            save_portfolio(port)
+            if added:
+                st.success(f"일지 종목 {added}건을 추가했습니다. 시세는 자동 갱신됩니다.")
+            else:
+                st.info("이미 들어 있는 일지 종목입니다.")
         ic = st.columns([1.1, 1, 1, 1, 1.4])
         in_tk = ic[0].text_input("종목코드/티커", value=TK, key="p_tk")
         in_dt = ic[1].date_input("매수일", value=datetime.today(), key="p_dt")
@@ -6146,10 +6356,21 @@ with TABS[8], guard("my투자"):
                     else:
                         st.markdown('<div class="hint">발생한 고점 신호가 없습니다.</div>',
                                     unsafe_allow_html=True)
+                    if r.get("pre_pivot"):
+                        st.markdown(tag("피벗 전 예외 진입", "warn") +
+                                    ' <span class="hint">일지에 예외로 남깁니다. '
+                                    '예외가 두 번 연속이면 시스템이 아닙니다.</span>',
+                                    unsafe_allow_html=True)
+                    if r.get("eight"):
+                        st.markdown(tag("8주 규칙", "pass" if r["eight"].get("on") else "idle") +
+                                    f' <span class="hint">{r["eight"].get("msg","")}</span>',
+                                    unsafe_allow_html=True)
                     if r["binfo"]:
                         st.markdown(f'<div class="ev">현재 베이스 · <b>{r["binfo"]["type"]}</b> · '
                                     f'{r["binfo"]["stage"]} · 피봇 '
-                                    f'{fmt(r["binfo"]["pivot"], r["market"])}</div>',
+                                    f'{fmt(r["binfo"]["pivot"], r["market"])}'
+                                    + (f' · 1차익절까지 {r["to_t1"]:+.1f}%' if r.get("to_t1") is not None else "")
+                                    + '</div>',
                                     unsafe_allow_html=True)
                     ec = st.columns([1, 1, 3])
                     if ec[0].button("청산 기록", key=f'close_{r["h"]["id"]}'):
