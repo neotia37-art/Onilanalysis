@@ -1,4 +1,4 @@
-# CANSLIM TERMINAL v13.1
+# CANSLIM TERMINAL v13.3
 
 일지([빠방홀러 4화](https://bbabangholer.tistory.com/16))와 보유 판단에서 드러난 규칙 구멍을 닫은 버전입니다.
 
@@ -10,6 +10,12 @@
 `.streamlit/config.toml`(이 저장소는 루트 `config.toml`), `requirements.txt`는 그대로입니다.
 
 사이드바 **시세·재무 캐시 새로고침**을 누르면 1시간 TTL 캐시를 비우고 숫자를 다시 받습니다.
+
+## v13.3에서 고친 것
+
+- **분석보강 tz 오류** — yfinance `earnings_dates`는 tz-aware, `datetime.today()`는 tz-naive라
+  `earn_days` 계산에서 `TypeError: Cannot subtract tz-naive and tz-aware datetime-like objects`가 났습니다.
+  `naive_ts()`로 실적일·뉴스·보유일수를 모두 naive Timestamp로 맞춥니다.
 
 ## v13.1에서 고친 것
 
