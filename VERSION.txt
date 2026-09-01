@@ -1,2 +1,2 @@
-CANSLIM TERMINAL v13.5
-NTAP street snapshot 2026-08-31 + hold probation + HNGE 8/31 close in journal
+CANSLIM TERMINAL v13.6
+Individual-stock FTD + distribution-day study panel (STEP 6.5) with inline rules
