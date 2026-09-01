@@ -1,2 +1,2 @@
-CANSLIM TERMINAL v13.3
-tz-naive/aware fix for extra_diagnostics earn_days
+CANSLIM TERMINAL v13.4
+NTAP hold memo + HNGE 2026-08-31 close recorded in journal seed
