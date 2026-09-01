@@ -1,2 +1,2 @@
-CANSLIM TERMINAL v13.4
-NTAP hold memo + HNGE 2026-08-31 close recorded in journal seed
+CANSLIM TERMINAL v13.5
+NTAP street snapshot 2026-08-31 + hold probation + HNGE 8/31 close in journal
