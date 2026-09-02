@@ -39,6 +39,10 @@
                 st.markdown(
                     '<div class="ev">분기 매출 '
                     + (" → ".join(pct(x, 0) for x in _ed["q_sales_hist"]) or "—")
+                    + ' · 연간 매출 '
+                    + (" → ".join(pct(x, 0) for x in _ed["y_sales_hist"]) or "—")
+                    + ' · 분기 EPS '
+                    + (" → ".join(pct(x, 0) for x in _ed["q_eps_hist"]) or "—")
                     + ' · 연간 EPS '
                     + (" → ".join(pct(x, 0) for x in _ed["y_eps_hist"]) or "—")
                     + ' · 연간 순이익 '
