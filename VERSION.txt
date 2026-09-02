@@ -1,3 +1,4 @@
-CANSLIM TERMINAL v13.8
-IBD-proxy complete: EPS rating + A elite 30%/ROE17, RS 87 / 6-12m ban / drop-to-70 no-add, sector top5, contra-market, FTD leaders, hold C·A·RS comments + sell rank
-GitHub loader injects engine A+B + STEP 3b/5/HOLD. Conservative vs official IBD — see IBD_ADJ.
+CANSLIM TERMINAL v13.9
+IBD-proxy: EPS rating + A elite 30%/ROE17, RS 87 / 6-12m ban / drop-to-70 no-add,
+sector top5, contra-market, FTD leaders, hold C·A·RS comments + sell rank.
+Conservative vs official IBD — see IBD_ADJ in code for next-revision notes.
