@@ -1,4 +1,5 @@
-CANSLIM TERMINAL v13.9
-IBD-proxy: EPS rating + A elite 30%/ROE17, RS 87 / 6-12m ban / drop-to-70 no-add,
-sector top5, contra-market, FTD leaders, hold C·A·RS comments + sell rank.
-Conservative vs official IBD — see IBD_ADJ in code for next-revision notes.
+CANSLIM TERMINAL v14.0
+I sponsorship desk: volume-ratio corner, IBD front page (manual),
+36-month mutual-fund top10/new/cut, open-block tape, per-ticker IBD notes.
+Auto score capped at 40/100 — subscription copy is the other 60.
+See IBD_I_ADJ.
