@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.4 — checkup book 17 + mutual snaps + inst accumulate."""
+"""CANSLIM TERMINAL v14.4b — checkup_for before TAB 3 (NameError fix)."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_4_patched.py")
+_CACHE = Path("/tmp/canslim_v14_4b_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -53,7 +53,8 @@ def _load():
         src = _CACHE.read_text(encoding="utf-8")
         if ("TABS[10]" in src and "CHECKUP_REV" in src and "checkup_blank_items" in src
                 and "Checkup 항목 입력" in src and "ensure_book_seed" in src
-                and "BOOK_REV" in src and "Daily Mutual 스냅샷" in src):
+                and "BOOK_REV" in src and "Daily Mutual 스냅샷" in src
+                and "def checkup_rows_for" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
         src = r.read().decode("utf-8")
@@ -100,6 +101,11 @@ def _load():
     if "def load_ibd_desk" not in src and "def save_portfolio(p):" in src:
         src = src.replace(a_sv, a_sv + "\n" + desk_e + "\n", 1)
     a_t3 = "# TAB 3 — 개별종목"
+    _ck_pre = "\n\n" + desk_e + "\n\n" + ck_e + "\n\n" + book + "\n\n"
+    if a_t3 in src:
+        head, tail = src.split(a_t3, 1)
+        if "def checkup_for" not in head or "def checkup_rows_for" not in head:
+            src = head + _ck_pre + a_t3 + tail
     if "IBD DESK" not in src and a_t3 in src:
         src = src.replace(a_t3, desk_m + "\n" + a_t3, 1)
     a_65 = "        # STEP 6.5 종목 FTD · 분산일 (매도일) — 시장 규칙을 이 종목에 이식"
