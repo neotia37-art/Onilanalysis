@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.4c — desk_m inside TAB 1 (IndentationError fix)."""
+"""CANSLIM TERMINAL v14.4d — desk_s has no duplicate ibd_nd keys."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_4c_patched.py")
+_CACHE = Path("/tmp/canslim_v14_4d_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -54,7 +54,7 @@ def _load():
         if ("TABS[10]" in src and "CHECKUP_REV" in src and "checkup_blank_items" in src
                 and "Checkup 항목 입력" in src and "ensure_book_seed" in src
                 and "BOOK_REV" in src and "Daily Mutual 스냅샷" in src
-                and "def checkup_rows_for" in src):
+                and "def checkup_rows_for" in src and "키 중복 금지" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
         src = r.read().decode("utf-8")
