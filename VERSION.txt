@@ -1,6 +1,7 @@
-CANSLIM TERMINAL v14.3
-IBD Stock Checkup full sheet — 20260903_WT PDF transcribed item-by-item.
-Print date 2026-09-02 11:33 PM ET (Market Closed), ingested 2026-09-03.
-31 rows with green/yellow/red/none dots + group leaders + article.
-Manual add/edit/delete by date; blank 31-row template for any ticker.
-Tell Grok with a new PDF or edit in-app.
+CANSLIM TERMINAL v14.4
+기관투자동향 + Stock Checkup 17종 누적.
+DailyMutual 2026-07-17 / 2026-09-01 + Top Fidelity Sector 22개 + TopBuys 8/10.
+Checkup PDF 17종 (AMZN ANET CRWD DINO ERO ETON GOOG HALO META MSFT MU OMDA SKWD SNDK TSM VLO WT)
+2026-09-02 종가 지면. 항목·색점·펀드%/분기 시드. 날짜별 수동 입력·정정·추이.
+개별종목 탭에서 시트 편집, 기관동향 탭에서 Mutual/펀드/기관 행 누적.
+PDF를 주시면 옮기거나 앱에서 직접 고치다.

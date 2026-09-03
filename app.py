@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.3 — v13.1 base + FTD + IBD-proxy + desk + MA + inst tab."""
+"""CANSLIM TERMINAL v14.4 — checkup book 17 + mutual snaps + inst accumulate."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_3_patched.py")
+_CACHE = Path("/tmp/canslim_v14_4_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -51,7 +51,9 @@ def _fetch(name):
 def _load():
     if _CACHE.exists() and _CACHE.stat().st_size > 100000:
         src = _CACHE.read_text(encoding="utf-8")
-        if ("TABS[10]" in src and "CHECKUP_REV" in src and "checkup_blank_items" in src and "Checkup 항목 입력" in src):
+        if ("TABS[10]" in src and "CHECKUP_REV" in src and "checkup_blank_items" in src
+                and "Checkup 항목 입력" in src and "ensure_book_seed" in src
+                and "BOOK_REV" in src and "Daily Mutual 스냅샷" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
         src = r.read().decode("utf-8")
@@ -75,6 +77,7 @@ def _load():
     inst = _fetch("ibd_inst_tab.py")
     ck_e = _fetch("ibd_checkup_full.py")
     ck_u = _fetch("ibd_checkup_ui.py")
+    book = _fetch("ibd_book_v14_4.py")
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
         src = src.replace(a_idx, ftd + a_idx, 1)
@@ -110,7 +113,15 @@ def _load():
             src = src[:i0] + chart.rstrip() + "\n" + src[i1:]
     if "with TABS[10], guard(\"기관동향\")" not in src:
         src = src.rstrip() + "\n\n" + inst + "\n"
-    src += "\n\n" + desk_e + "\n\n" + ck_e + "\n"
+    elif "Daily Mutual 스냅샷" not in src or "ensure_book_seed" not in src:
+        i0 = src.find("with TABS[10], guard(\"기관동향\")")
+        if i0 < 0:
+            i0 = src.find("# TAB 10")
+        if i0 >= 0:
+            src = src[:i0] + inst + "\n"
+        else:
+            src = src.rstrip() + "\n\n" + inst + "\n"
+    src += "\n\n" + desk_e + "\n\n" + ck_e + "\n\n" + book + "\n"
     a_ck = '        step_header("IBD CHECKUP"'
     a_65b = "        # STEP 6.5 종목 FTD"
     if "Checkup 항목 입력" not in src and a_ck in src and a_65b in src:
