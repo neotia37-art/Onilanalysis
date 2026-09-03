@@ -1,5 +1,6 @@
-CANSLIM TERMINAL v14.2
-IBD Stock Checkup full sheet with green/yellow/red dots.
-WT 2026-09-02 PDF transcribed item-by-item.
-Manual add/edit/delete of every row + color.
-Tell Grok or edit in-app to update later dates.
+CANSLIM TERMINAL v14.3
+IBD Stock Checkup full sheet — 20260903_WT PDF transcribed item-by-item.
+Print date 2026-09-02 11:33 PM ET (Market Closed), ingested 2026-09-03.
+31 rows with green/yellow/red/none dots + group leaders + article.
+Manual add/edit/delete by date; blank 31-row template for any ticker.
+Tell Grok with a new PDF or edit in-app.
