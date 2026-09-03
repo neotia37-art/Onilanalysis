@@ -1,6 +1,5 @@
-CANSLIM TERMINAL v14.1
-IBD front scan (daily upsert) from 2026-09-02 close+AH.
-Cancelled 09-02 intraday-down seed.
-Charts: 21-day EMA, 50-day SMA, 10-week SMA.
-Institution tab + Stock Checkup book (17 names, manual edit after).
-I score now reads fund-count change / A/D from Checkup.
+CANSLIM TERMINAL v14.2
+IBD Stock Checkup full sheet with green/yellow/red dots.
+WT 2026-09-02 PDF transcribed item-by-item.
+Manual add/edit/delete of every row + color.
+Tell Grok or edit in-app to update later dates.

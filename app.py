@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.1 — v13.1 base + FTD + IBD-proxy + desk + MA + inst tab."""
+"""CANSLIM TERMINAL v14.2 — v13.1 base + FTD + IBD-proxy + desk + MA + inst tab."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_1_patched.py")
+_CACHE = Path("/tmp/canslim_v14_2_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -51,7 +51,7 @@ def _fetch(name):
 def _load():
     if _CACHE.exists() and _CACHE.stat().st_size > 100000:
         src = _CACHE.read_text(encoding="utf-8")
-        if ("TABS[10]" in src and "21일 EMA" in src and "기관동향" in src):
+        if ("TABS[10]" in src and "wt_checkup_full_20260902" in src and "Checkup 항목 입력" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
         src = r.read().decode("utf-8")
@@ -73,6 +73,8 @@ def _load():
     desk_s = _fetch("ibd_desk_ui_stk.py")
     chart = _fetch("ibd_ma_chart.py")
     inst = _fetch("ibd_inst_tab.py")
+    ck_e = _fetch("ibd_checkup_full.py")
+    ck_u = _fetch("ibd_checkup_ui.py")
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
         src = src.replace(a_idx, ftd + a_idx, 1)
@@ -108,7 +110,16 @@ def _load():
             src = src[:i0] + chart.rstrip() + "\n" + src[i1:]
     if "with TABS[10], guard(\"기관동향\")" not in src:
         src = src.rstrip() + "\n\n" + inst + "\n"
-    src += "\n\n" + desk_e + "\n"
+    src += "\n\n" + desk_e + "\n\n" + ck_e + "\n"
+    a_ck = '        step_header("IBD CHECKUP"'
+    a_65b = "        # STEP 6.5 종목 FTD"
+    if "Checkup 항목 입력" not in src and a_ck in src and a_65b in src:
+        i0 = src.find(a_ck)
+        i1 = src.find(a_65b)
+        if 0 <= i0 < i1:
+            src = src[:i0] + ck_u.rstrip() + "\n\n" + src[i1:]
+    elif "Checkup 항목 입력" not in src and a_65b in src:
+        src = src.replace(a_65b, ck_u + "\n" + a_65b, 1)
     if "def load_ibd_desk" not in src:
         raise RuntimeError("IBD desk engine patch did not apply")
     if "IBD DESK" not in src:
@@ -122,7 +133,7 @@ def _load():
     if "def inst_rows_for" not in src:
         src += "\n\ndef inst_rows_for(tk, desk):\n    return [x for x in (desk.get('inst') or []) if str(x.get('ticker','')).upper() == str(tk or '').upper()]\n"
     if "def upsert_front" not in src:
-        src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'3지수 동반 상승 · 나스닥 거래량 +10.25% / NYSE −2.43%','note':'종가 상승일. 나스닥 매집형 테이프. NYSE 거래량 감소.'}\n"
+        src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'3지수 동반 상승','note':'종가 상승일'}\n"
     _CACHE.write_text(src, encoding="utf-8")
     return src
 
