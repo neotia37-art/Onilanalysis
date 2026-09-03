@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.4b — checkup_for before TAB 3 (NameError fix)."""
+"""CANSLIM TERMINAL v14.4c — desk_m inside TAB 1 (IndentationError fix)."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_4b_patched.py")
+_CACHE = Path("/tmp/canslim_v14_4c_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -106,8 +106,9 @@ def _load():
         head, tail = src.split(a_t3, 1)
         if "def checkup_for" not in head or "def checkup_rows_for" not in head:
             src = head + _ck_pre + a_t3 + tail
-    if "IBD DESK" not in src and a_t3 in src:
-        src = src.replace(a_t3, desk_m + "\n" + a_t3, 1)
+    a_mkt = '        states, bw = CTX["states"], CTX["bw"]'
+    if "IBD DESK" not in src and a_mkt in src:
+        src = src.replace(a_mkt, a_mkt + "\n" + desk_m, 1)
     a_65 = "        # STEP 6.5 종목 FTD · 분산일 (매도일) — 시장 규칙을 이 종목에 이식"
     if "I · 기관보증" not in src and a_65 in src:
         src = src.replace(a_65, desk_s + "\n" + a_65, 1)
@@ -151,6 +152,12 @@ def _load():
         src += "\n\ndef inst_rows_for(tk, desk):\n    return [x for x in (desk.get('inst') or []) if str(x.get('ticker','')).upper() == str(tk or '').upper()]\n"
     if "def upsert_front" not in src:
         src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'3지수 동반 상승 · 나스닥 거래량 +10.25% / NYSE \u22122.43%','note':'종가 상승일. 나스닥 매집형 테이프. NYSE 거래량 감소.'}\n"
+    try:
+        compile(src, str(_CACHE), "exec")
+    except SyntaxError as e:
+        raise RuntimeError(
+            f"assembled source SyntaxError line {e.lineno}: {e.msg}: {(e.text or '').strip()}"
+        )
     _CACHE.write_text(src, encoding="utf-8")
     return src
 
