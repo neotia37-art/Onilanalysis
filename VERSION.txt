@@ -1,5 +1,6 @@
-CANSLIM TERMINAL v14.0
-I sponsorship desk: volume-ratio corner, IBD front page (manual),
-36-month mutual-fund top10/new/cut, open-block tape, per-ticker IBD notes.
-Auto score capped at 40/100 — subscription copy is the other 60.
-See IBD_I_ADJ.
+CANSLIM TERMINAL v14.1
+IBD front scan (daily upsert) from 2026-09-02 close+AH.
+Cancelled 09-02 intraday-down seed.
+Charts: 21-day EMA, 50-day SMA, 10-week SMA.
+Institution tab + Stock Checkup book (17 names, manual edit after).
+I score now reads fund-count change / A/D from Checkup.
