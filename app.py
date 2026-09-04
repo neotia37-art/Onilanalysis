@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.6 — IBD base lock + PBF checkup + ticker-scoped checkup widgets."""
+"""CANSLIM TERMINAL v14.7 — IBD base lock + PBF checkup + ticker-scoped checkup widgets."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_6_patched.py")
+_CACHE = Path("/tmp/canslim_v14_7_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -58,7 +58,7 @@ def _load():
                 and "CHECKUP_BOOK_20260904" in src
                 and "WEEKLY_REVIEW_20260903" in src
                 and "MARKET_PULSE_20260903" in src
-                and "BASE_FIX_V14_6" in src
+                and "BASE_FIX_V14_7" in src
                 and "CHECKUP_BOOK_PBF" in src
                 and "apply_ibd_overlay" in src):
             return src
@@ -87,7 +87,7 @@ def _load():
     book4 = _fetch("ibd_book_v14_4.py")
     book5 = _fetch("ibd_book_v14_5.py")
     book6 = _fetch("ibd_book_v14_6.py")
-    basefix = _fetch("ibd_base_fix_v14_6.py")
+    basefix = _fetch("ibd_base_fix_v14_7.py")
     book = book4 + "\n\n" + book5 + "\n\n" + book6
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
@@ -165,15 +165,14 @@ def _load():
     if "WEEKLY_REVIEW_20260903" not in src:
         raise RuntimeError("v14.5 weekly review list did not apply")
     if "CHECKUP_BOOK_PBF" not in src:
-        raise RuntimeError("v14.6 PBF checkup book did not apply")
-    if "BASE_FIX_V14_6" not in src:
-        src += "\n\n" + basefix + "\n"
-    if "apply_ibd_overlay" not in src:
-        raise RuntimeError("v14.6 base fix did not apply")
+        raise RuntimeError("v14.7 PBF checkup book did not apply")
+    src += "\n\n" + basefix + "\n"
+    if "BASE_FIX_V14_7" not in src or "apply_ibd_overlay" not in src:
+        raise RuntimeError("v14.7 base fix did not apply")
     a_binfo = "    binfo = analyze_base(dfd, market, zig_pct)\n"
     a_binfo2 = ("    binfo = analyze_base(dfd, market, zig_pct)\n"
                 "    try:\n"
-                "        _desk = load_ibd_desk() if \"load_ibd_desk\" in dir() else None\n"
+                "        _desk = load_ibd_desk() if callable(globals().get(\"load_ibd_desk\")) else None\n"
                 "        binfo = apply_ibd_overlay(binfo, tk, _desk)\n"
                 "    except Exception:\n"
                 "        pass\n")
