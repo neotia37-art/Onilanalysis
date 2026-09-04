@@ -87,7 +87,9 @@ def _load():
     book4 = _fetch("ibd_book_v14_4.py")
     book5 = _fetch("ibd_book_v14_5.py")
     book6 = _fetch("ibd_book_v14_6.py")
-    basefix = _fetch("ibd_base_fix_v14_7.py")
+    basefix = (_fetch("ibd_base_fix_v14_7a1.py") + "\n"
+               + _fetch("ibd_base_fix_v14_7a2.py") + "\n"
+               + _fetch("ibd_base_fix_v14_7b.py"))
     book = book4 + "\n\n" + book5 + "\n\n" + book6
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
