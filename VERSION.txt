@@ -1,9 +1,11 @@
-CANSLIM TERMINAL v14.6
-2026-09-04 IBD base lock (PBF review).
-- Pivot = exact daily left-side/handle high (no +$0.10). Locked after first close above pivot until 8%+ new correction.
-- Left-high date must precede base low. Incomplete week dropped from weekly zigzag.
-- HTF only if prior run >=90% and depth <=20%. 50-day +15% = chase ban.
-- Volume <1.4x never kind=pass. Banner adds "종목비허가" when stock is not pass.
-- Market score capped when distribution days >=3 or FTD age >70.
-- PBF Stock Checkup 2026-09-04 seeded (Comp 97 / EPS 72 / RS 99 / SMR D).
-- Checkup editor widgets keyed by ticker (no NVDA leak into PBF).
+CANSLIM TERMINAL v14.7
+2026-09-04 IBD base lock + Checkup gate (PBF review).
+- v14.6 base-fix file was missing on GitHub; live app still used rolling weekly pivot.
+- Pivot identity = exact daily left-side/handle high. Locked after first close above pivot until 8%+ new correction. Incomplete week dropped.
+- US buy trigger = pivot + $0.10 (O'Neil). KR = pivot * 1.001. Banner shows both 피봇 and 매수점.
+- HTF only if prior run >=90% and depth <=20% and 3-6 weeks. 50-day +15% = chase ban.
+- Volume <1.4x (+40%) never kind=pass. 3rd-stage base never kind=pass.
+- Checkup overlay actually reads desk (fixed dir() bug). Gate: Comp 90 / EPS 80 / RS 80 / SMR A-B / A-D A-B.
+- PBF seed 2026-09-04: Comp 97 / EPS 72 / RS 99 / SMR D / A-D A / 50일 +19.07% / group rank 2.
+- Checkup editor + note widgets keyed by ticker (no NVDA leak).
+- Banner: 종목비허가 + IBD gate tags when stock is not pass.
