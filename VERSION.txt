@@ -1,5 +1,9 @@
-CANSLIM TERMINAL v14.5
-2026-09-04 Checkup 22종 누적 (AMD APH AVGO BNMR CLS COHR CRDO DELL HOOD LITE LLY LRGX MPC MRVL MUFG NET PLTR PSX RNG TLN TX WPM).
-Weekly Review 8585 (2026-09-03 종가) + MARKET PULSE(노출 60-80%, 분산 나스닥4/S&P3, 리더 SNOW HPE DELL) + 매수지점근접(MSFT 513.73 / PLTR 182.44 / NOW 139.20 / SHOP 158.87) + 롱텀리더스 8/11.
-9/2 17종 book 유지(rev 5). 신규는 date=2026-09-04 rev 6.
-개별종목 체크업·기관동향 수동 업서트 그대로.
+CANSLIM TERMINAL v14.6
+2026-09-04 IBD base lock (PBF review).
+- Pivot = exact daily left-side/handle high (no +$0.10). Locked after first close above pivot until 8%+ new correction.
+- Left-high date must precede base low. Incomplete week dropped from weekly zigzag.
+- HTF only if prior run >=90% and depth <=20%. 50-day +15% = chase ban.
+- Volume <1.4x never kind=pass. Banner adds "종목비허가" when stock is not pass.
+- Market score capped when distribution days >=3 or FTD age >70.
+- PBF Stock Checkup 2026-09-04 seeded (Comp 97 / EPS 72 / RS 99 / SMR D).
+- Checkup editor widgets keyed by ticker (no NVDA leak into PBF).
