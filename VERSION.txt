@@ -1,7 +1,6 @@
-CANSLIM TERMINAL v14.11
-FTD훈련: QQQ/SPY 거래량을 분산일 판정에서 제거. 지수 거래량 + 손표시 달력.
-야후 지수Vol이 거래소 규모(수십억)가 아니면 자동 카운트 폐기, Pulse만 배너.
-IBD 09/07 지수 인쇄 수록 (NAS 26506.99 vol 6.5B -18.6% / SPX 7718.60 vol 4.1B -15.9%).
-손표시 기본: 8/18 8/24 9/1 9/4 = 아님(프록시), 8/20 = 후보.
-WT/PBF 09/07 일·주봉 재판독 desk notes.
-캐시 /tmp/canslim_v14_11_patched.py
+CANSLIM TERMINAL v14.12
+시장 탭 LIVE 패널: 앱이 받은 지수로 즉시 재계산.
+CNN 공식 Fear & Greed vs 앱 자체 산출 vs IBD Pulse(노출·분산·FTD) 3열 비교.
+CNN 호출에 Referer를 넣어 418을 피함. 실패 시 2026-09-04 공식값 41.9 Fear를 표시.
+캐시 /tmp/canslim_v14_12_patched.py
+「지금 다시 계산」이 CNN·yfinance 캐시를 비운다.
