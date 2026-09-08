@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.7 — IBD base lock + PBF checkup + ticker-scoped checkup widgets."""
+"""CANSLIM TERMINAL v14.9 — 0908 checkup seed + FTD/DD drill tab (index 0.2% / 1.7%)."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_7_patched.py")
+_CACHE = Path("/tmp/canslim_v14_9_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -40,7 +40,7 @@ _OLD_TABS = '''TABS = st.tabs(["  대시보드  ", "  시장  ", "  환율  ", "
                 "  분석보강  ", "  뉴스  ", "  종목스캔  ", "  my투자  ", "  사용 가이드  "])'''
 _NEW_TABS = '''TABS = st.tabs(["  대시보드  ", "  시장  ", "  환율  ", "  개별종목  ", "  차트스쿨  ",
                 "  분석보강  ", "  뉴스  ", "  종목스캔  ", "  my투자  ", "  사용 가이드  ",
-                "  기관동향  "])'''
+                "  기관동향  ", "  FTD훈련  "])'''
 
 
 def _fetch(name):
@@ -60,7 +60,10 @@ def _load():
                 and "MARKET_PULSE_20260903" in src
                 and "BASE_FIX_V14_7" in src
                 and "CHECKUP_BOOK_PBF" in src
-                and "apply_ibd_overlay" in src):
+                and "apply_ibd_overlay" in src
+                and "CHECKUP_BOOK_V14_9" in src
+                and "FTD_DRILL_TAB_V14_9" in src
+                and "TABS[11]" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
         src = r.read().decode("utf-8")
@@ -87,10 +90,12 @@ def _load():
     book4 = _fetch("ibd_book_v14_4.py")
     book5 = _fetch("ibd_book_v14_5.py")
     book6 = _fetch("ibd_book_v14_6.py")
+    book8 = _fetch("ibd_book_v14_8.py")
+    drill = _fetch("ibd_ftd_drill_tab.py")
     basefix = (_fetch("ibd_base_fix_v14_7a1.py") + "\n"
                + _fetch("ibd_base_fix_v14_7a2.py") + "\n"
                + _fetch("ibd_base_fix_v14_7b.py"))
-    book = book4 + "\n\n" + book5 + "\n\n" + book6
+    book = book4 + "\n\n" + book5 + "\n\n" + book6 + "\n\n" + book8
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
         src = src.replace(a_idx, ftd + a_idx, 1)
@@ -162,6 +167,12 @@ def _load():
         src += "\n\ndef checkup_for(tk, desk):\n    rows = (desk.get('checkups') or {}).get(str(tk or '').upper()) or []\n    return rows[-1] if rows else None\n"
     if "def inst_rows_for" not in src:
         src += "\n\ndef inst_rows_for(tk, desk):\n    return [x for x in (desk.get('inst') or []) if str(x.get('ticker','')).upper() == str(tk or '').upper()]\n"
+    if "with TABS[11], guard(\"FTD훈련\")" not in src:
+        src = src.rstrip() + "\n\n" + drill + "\n"
+    if "CHECKUP_BOOK_V14_9" not in src:
+        raise RuntimeError("v14.9 checkup book 0908 did not apply")
+    if "FTD_DRILL_TAB" not in src:
+        raise RuntimeError("v14.9 FTD drill tab did not apply")
     if "CHECKUP_BOOK_20260904" not in src:
         raise RuntimeError("v14.5 checkup book 22 did not apply")
     if "WEEKLY_REVIEW_20260903" not in src:
@@ -181,7 +192,7 @@ def _load():
     if "apply_ibd_overlay(binfo" not in src and a_binfo in src:
         src = src.replace(a_binfo, a_binfo2, 1)
     if "def upsert_front" not in src:
-        src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'3지수 동반 상승 · 나스닥 거래량 +10.25% / NYSE −2.43%','note':'종가 상승일. 나스닥 매집형 테이프. NYSE 거래량 감소.'}\n"
+        src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'3지수 동반 상승 · 나스닥 거래량 +10.25% / NYSE \u22122.43%','note':'종가 상승일. 나스닥 매집형 테이프. NYSE 거래량 감소.'}\n"
     try:
         compile(src, str(_CACHE), "exec")
     except SyntaxError as e:
