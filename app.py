@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.11 — FTD index-volume only + IBD 0907 chart gold + WT/PBF."""
+"""CANSLIM TERMINAL v14.12 — LIVE market tab + CNN vs app vs IBD Fear/Greed."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_11_patched.py")
+_CACHE = Path("/tmp/canslim_v14_12_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -65,6 +65,9 @@ def _load():
                 and "FTD_DRILL_TAB_V14_11" in src
                 and "CHART_READ_V14_11" in src
                 and "INDEX_CHART_READ_20260907" in src
+                and "MKT_LIVE_V14_12" in src
+                and "MKT_LIVE_UI_V14_12" in src
+                and "render_market_live(" in src
                 and "TABS[11]" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
@@ -95,6 +98,7 @@ def _load():
     book8 = _fetch("ibd_book_v14_8.py")
     book10 = _fetch("ibd_book_v14_10.py")
     drill = _fetch("ibd_ftd_drill_tab.py")
+    mktlive = _fetch("ibd_mkt_live_v14_12.py") + "\n" + _fetch("ibd_mkt_live_ui_v14_12.py")
     basefix = (_fetch("ibd_base_fix_v14_7a1.py") + "\n"
                + _fetch("ibd_base_fix_v14_7a2.py") + "\n"
                + _fetch("ibd_base_fix_v14_7b.py"))
@@ -129,6 +133,10 @@ def _load():
     a_mkt = '        states, bw = CTX["states"], CTX["bw"]'
     if "IBD DESK" not in src and a_mkt in src:
         src = src.replace(a_mkt, a_mkt + "\n" + desk_m, 1)
+    if "MKT_LIVE_V14_12" not in src:
+        src += "\n\n" + mktlive + "\n"
+    if "render_market_live(" not in src and a_mkt in src:
+        src = src.replace(a_mkt, a_mkt + "\n        render_market_live(CTX)\n", 1)
     a_65 = "        # STEP 6.5 종목 FTD · 분산일 (매도일) — 시장 규칙을 이 종목에 이식"
     if "I · 기관보증" not in src and a_65 in src:
         src = src.replace(a_65, desk_s + "\n" + a_65, 1)
@@ -180,6 +188,12 @@ def _load():
         raise RuntimeError("v14.11 FTD drill did not apply")
     if "INDEX_CHART_READ_20260907" not in src:
         raise RuntimeError("v14.11 index chart gold did not apply")
+    if "MKT_LIVE_V14_12" not in src:
+        src += "\n\n" + mktlive + "\n"
+    if "render_market_live(" not in src and a_mkt in src:
+        src = src.replace(a_mkt, a_mkt + "\n        render_market_live(CTX)\n", 1)
+    if "MKT_LIVE_V14_12" not in src or "MKT_LIVE_UI_V14_12" not in src or "render_market_live(" not in src:
+        raise RuntimeError("v14.12 market live panel did not apply")
     if "FTD_DRILL_TAB" not in src:
         raise RuntimeError("v14.9 FTD drill tab did not apply")
     if "CHECKUP_BOOK_20260904" not in src:
@@ -203,7 +217,7 @@ def _load():
     if "apply_ibd_overlay(binfo" not in src and a_binfo in src:
         src = src.replace(a_binfo, a_binfo2, 1)
     if "def upsert_front" not in src:
-        src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'3지수 동반 상승 · 나스닥 거래량 +10.25% / NYSE \u22122.43%','note':'종가 상승일. 나스닥 매집형 테이프. NYSE 거래량 감소.'}\n"
+        src += "\n\ndef upsert_front(desk, rec):\n    rec = dict(rec)\n    dt = str(rec.get('date') or '')\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != dt] + [rec]\n    save_ibd_desk(desk)\n    return desk\n\ndef delete_front(desk, dt):\n    desk['front'] = [x for x in (desk.get('front') or []) if str(x.get('date')) != str(dt)]\n    save_ibd_desk(desk)\n    return desk\n\ndef ibd_front_seed_20260902_close():\n    return {'date':'2026-09-02','source':'IBD 첫화면 수동','tag':'2026-09-02-close-ah','nasdaq':26217.83,'nasdaq_chg':0.45,'nasdaq_pts':118.05,'dji':53061.95,'dji_chg':0.56,'dji_pts':295.07,'spx':7666.60,'spx_chg':0.46,'spx_pts':35.13,'nasdaq_vol':7443.0,'nasdaq_vol_chg':10.25,'nasdaq_vol_pts':692.0,'nyse_vol':4739.0,'nyse_vol_chg':-2.43,'nyse_vol_pts':-118.0,'qqq_ah':709.24,'qqq_ah_chg':0.23,'qqq_ah_pts':1.60,'spy_ah':765.16,'spy_ah_chg':0.44,'spy_ah_pts':3.38,'dia_ah':530.62,'dia_ah_chg':0.54,'dia_ah_pts':2.87,'headline':'지수 동반 상승 · 나스닥 거래량 +10.25% / NYSE \u22122.43%','note':'종가 상승일. 나스닥 매집형 테이프. NYSE 거래량 감소.'}\n"
     try:
         compile(src, str(_CACHE), "exec")
     except SyntaxError as e:
