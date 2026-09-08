@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.9 — 0908 checkup seed + FTD/DD drill tab (index 0.2% / 1.7%)."""
+"""CANSLIM TERMINAL v14.11 — FTD index-volume only + IBD 0907 chart gold + WT/PBF."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_9_patched.py")
+_CACHE = Path("/tmp/canslim_v14_11_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 
 _HELPER = '''
@@ -62,7 +62,9 @@ def _load():
                 and "CHECKUP_BOOK_PBF" in src
                 and "apply_ibd_overlay" in src
                 and "CHECKUP_BOOK_V14_9" in src
-                and "FTD_DRILL_TAB_V14_9" in src
+                and "FTD_DRILL_TAB_V14_11" in src
+                and "CHART_READ_V14_11" in src
+                and "INDEX_CHART_READ_20260907" in src
                 and "TABS[11]" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
@@ -91,11 +93,12 @@ def _load():
     book5 = _fetch("ibd_book_v14_5.py")
     book6 = _fetch("ibd_book_v14_6.py")
     book8 = _fetch("ibd_book_v14_8.py")
+    book10 = _fetch("ibd_book_v14_10.py")
     drill = _fetch("ibd_ftd_drill_tab.py")
     basefix = (_fetch("ibd_base_fix_v14_7a1.py") + "\n"
                + _fetch("ibd_base_fix_v14_7a2.py") + "\n"
                + _fetch("ibd_base_fix_v14_7b.py"))
-    book = book4 + "\n\n" + book5 + "\n\n" + book6 + "\n\n" + book8
+    book = book4 + "\n\n" + book5 + "\n\n" + book6 + "\n\n" + book8 + "\n\n" + book10
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
         src = src.replace(a_idx, ftd + a_idx, 1)
@@ -171,6 +174,12 @@ def _load():
         src = src.rstrip() + "\n\n" + drill + "\n"
     if "CHECKUP_BOOK_V14_9" not in src:
         raise RuntimeError("v14.9 checkup book 0908 did not apply")
+    if "CHART_READ_V14_11" not in src:
+        raise RuntimeError("v14.11 chart read did not apply")
+    if "FTD_DRILL_TAB_V14_11" not in src:
+        raise RuntimeError("v14.11 FTD drill did not apply")
+    if "INDEX_CHART_READ_20260907" not in src:
+        raise RuntimeError("v14.11 index chart gold did not apply")
     if "FTD_DRILL_TAB" not in src:
         raise RuntimeError("v14.9 FTD drill tab did not apply")
     if "CHECKUP_BOOK_20260904" not in src:
@@ -187,6 +196,8 @@ def _load():
                 "    try:\n"
                 "        _desk = load_ibd_desk() if callable(globals().get(\"load_ibd_desk\")) else None\n"
                 "        binfo = apply_ibd_overlay(binfo, tk, _desk)\n"
+                "        if callable(globals().get(\"apply_chart_read\")):\n"
+                "            binfo = apply_chart_read(binfo, tk, _desk)\n"
                 "    except Exception:\n"
                 "        pass\n")
     if "apply_ibd_overlay(binfo" not in src and a_binfo in src:
