@@ -1,6 +1,7 @@
-CANSLIM TERMINAL v14.8
-2026-09-08 Checkup seed: ANET NOW PBF SHOP SNOW VEEV FIVE IOT.
-FTD훈련 탭: 지수 분산일 -0.2%+전일거래량, 나스닥 FTD +1.7% / S&P +1.25%, 손계산 일기.
-기사 9/4 리스트 변동(IBD50 FIVE 편입, Notable에서 WT 제외) lists.list_changes_20260904.
-일일관리 LOG 2026-09-08 9행 + 원장 FIVE/IOT.
-캐시 /tmp/canslim_v14_8_patched.py
+CANSLIM TERMINAL v14.9
+2026-09-08 Checkup seed rev9: ANET NOW PBF SHOP SNOW VEEV FIVE IOT (PDF 재대조).
+FTD훈련 탭 v14.9: 지수 가격 + QQQ/SPY 거래량 프록시, 50일선, Pulse 원전 일기, 손계산.
+라이브 app.py 가 v14.7 이던 갩을 로더 교체로 닫음.
+기사 9/4 리스트 변동 + MARKET PULSE 9/3 (노출 60-80, DD 4/3).
+일일관리 LOG 2026-09-08 · FIVE 원장등급 X (S 오표기 수정).
+캐시 /tmp/canslim_v14_9_patched.py
