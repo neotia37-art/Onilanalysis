@@ -1,5 +1,8 @@
-# LIVE market UI continuation v14.12
+# LIVE market UI continuation v14.12 + inline IBD 5 psycho
 MKT_LIVE_UI_V14_12 = True
+MKT_PSYCHO_V14_13 = True
+MKT_PSYCHO_UI_V14_13 = True
+
 
 def _mkt_live_now():
     try:
@@ -117,53 +120,6 @@ def render_market_live(ctx=None):
              "warn" if int(pulse.get("dist_nasdaq") or 0) >= 3 else "up"),
         unsafe_allow_html=True)
 
-    rows = []
-    rows.append(["점수 0-100", cnn_s, app_s, str(ibd["score"])])
-    rows.append(["라벨", cnn_kr, str(app_label), ibd["label"]])
-    rows.append(["기준 시각", cnn_ts or "—", "앱 새로고침", str(ibd.get("date") or "—")])
-    rows.append(["원전", "CNN dataviz", "yfinance + 유니버스", "Market Pulse + 지수 FTD/DD"])
-    if cnn.get("indicators"):
-        for name, sc, rat in cnn["indicators"]:
-            rows.append([f"CNN {name}", f"{sc:.0f} {rat}", "—", "—"])
-    if app_fg and app_fg.get("comps"):
-        for name, sc, ev, note in app_fg["comps"]:
-            rows.append([f"앱 {name}", "—", f"{'' if sc is None else int(sc)} · {ev}", note])
-    rows.append(["IBD 노출", "—", "—", str(ibd.get("exposure") or "—")])
-    rows.append(["IBD 분산 NAS/SPX", "—", "—",
-                 f"{ibd.get('dist_nasdaq')} / {ibd.get('dist_spx')}"])
-    rows.append(["IBD 시장 FTD", "—", "—", str(ibd.get("ftd") or "—")])
-    if ibd.get("headline"):
-        rows.append(["Pulse 헤드라인", "—", "—", ibd["headline"]])
-    try:
-        st.markdown(table(["칸", "CNN 공식", "앱 계산", "IBD"], rows), unsafe_allow_html=True)
-    except Exception:
-        st.dataframe([{"칸": a, "CNN": b, "앱": c, "IBD": d} for a, b, c, d in rows],
-                     hide_index=True, use_container_width=True)
-
-    try:
-        cs, aps, ibs = float(cnn.get("score") or 0), float(app_score or 0), float(ibd["score"])
-        gap_ca = aps - cs
-        gap_ci = ibs - cs
-        bits = []
-        if abs(gap_ca) <= 8:
-            bits.append(f"앱과 CNN은 {gap_ca:+.0f}pt로 가깝다.")
-        else:
-            bits.append(f"앱과 CNN은 {gap_ca:+.0f}pt 벌어졌다. 풋콜·신고가 칸이 비어 있어서다.")
-        if cs <= 44 and ibs >= 55:
-            bits.append("CNN은 공포인데 IBD는 아직 상승세 쪽이다. 오닐은 CNN을 보지 않고 FTD·분산·리더를 본다.")
-        elif cs >= 60 and (pulse.get("dist_nasdaq") or 0) >= 3:
-            bits.append("CNN은 탐욕 쪽인데 Pulse 분산이 3~4일이다. 군중 낙관 + 기관 매도 흔적 = 추격 금지.")
-        elif (pulse.get("dist_nasdaq") or 0) >= 5:
-            bits.append("Pulse 분산 5+ 이면 지수가 어느 감정이든 추가는 없다.")
-        else:
-            bits.append("세 숫자가 같아도 매수 허가가 아니다. 허가 창은 적합도와 FTD훈련 탭에서 손으로 센다.")
-        st.markdown(
-            f'<div class="ev"><b>어긋남 읽기</b><br><span class="m">{" ".join(bits)} '
-            f"앱-CNN {gap_ca:+.0f} · IBD-CNN {gap_ci:+.0f}.</span></div>",
-            unsafe_allow_html=True)
-    except Exception:
-        pass
-
     try:
         read_box(
             "CNN 공식은 <b>군중 감정</b>이다. 앱 자체 산출은 같은 뼈대를 yfinance로 근사한 숙제다. "
@@ -173,15 +129,91 @@ def render_market_live(ctx=None):
     except Exception:
         st.caption("CNN=감정 / 앱=근사 / IBD=노출·분산·FTD. 섞어 사지 않는다.")
 
-    # v14.13 psycho panel (files already on main/patches)
+    render_market_psycho(ctx)
+
+
+def render_market_psycho(ctx=None):
+    """IBD 5대 심리. 인쇄본 9/8. 공포탐욕 67점과 다른 물건."""
+    ctx = ctx or {}
+    latest = {
+        "date": "2026-09-08",
+        "vix": 14.6, "put_call": 0.71, "high_low": 0.71,
+        "bulls": 54.9, "bears": 17.6, "margin_yoy": 38.6, "pc_web": 0.72,
+    }
+    hist = [
+        {"date": "2026-09-01", "vix": 15.5, "put_call": 0.79, "high_low": None,
+         "bulls": 51.9, "bears": 30.9, "margin_yoy": 38.6},
+        {"date": "2026-09-03", "vix": 15.2, "put_call": 0.73, "high_low": None,
+         "bulls": 45.0, "bears": None, "margin_yoy": 38.6},
+        dict(latest),
+    ]
     try:
-        if not callable(globals().get("render_market_psycho")):
-            import urllib.request
-            _base = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
-            _blob = ""
-            for _n in ("ibd_mkt_psycho_v14_13.py", "ibd_mkt_psycho_fn_v14_13.py", "ibd_mkt_psycho_fn2_v14_13.py", "ibd_mkt_psycho_ui_v14_13.py"):
-                _blob += urllib.request.urlopen(_base + _n, timeout=30).read().decode("utf-8") + "\n"
-            exec(_blob, globals(), globals())
-        render_market_psycho(ctx)
+        desk = load_ibd_desk()
+        lists = (desk.get("lists") if desk else None) or {}
+        if lists.get("psycho_latest"):
+            latest = lists["psycho_latest"]
+        if lists.get("psycho_history"):
+            hist = lists["psycho_history"]
     except Exception:
         pass
+
+    step_header(
+        "IBD 5대 심리지표",
+        "VIX · 풋콜 · High-Low · Bulls/Bears · Margin",
+        "아래 67점 공포탐욕과 다른 물건. DailyPsycho_090826 인쇄본.",
+    )
+    specs = [
+        ("VIX", latest.get("vix"), "14.6 · 45 미만=안일. 바닥 신호 아님"),
+        ("풋콜", latest.get("put_call"), "0.71 · 웹 0.72. 콜 편중=낙관"),
+        ("High-Low", latest.get("high_low"), "0.71 · 0.5 아래여야 조정바닥 감시"),
+        ("Bulls / Bears", latest.get("bulls"),
+         f"Bulls {latest.get('bulls')}% / Bears {latest.get('bears')}% · 자문 낙관"),
+        ("Margin YoY", latest.get("margin_yoy"), "38.6% · 55%가 대형 천정 경고"),
+    ]
+    cols = st.columns(5)
+    for col, (title, val, sub) in zip(cols, specs):
+        shown = "—" if val is None else (f"{float(val):.2f}" if title in ("풋콜", "High-Low")
+                                         else (f"{float(val):.1f}%" if title != "VIX" else f"{float(val):.1f}"))
+        try:
+            col.markdown(card(title, shown, sub, "warn"), unsafe_allow_html=True)
+        except Exception:
+            col.metric(title, shown, sub)
+
+    with st.expander("지표 설명 · 오닐이 이 숫자를 어떻게 읽나", expanded=False):
+        st.markdown(
+            "- **VIX** — IBD는 45 초과를 강세(공포=바닥 후보)로 본다. 14.6은 안일.\n"
+            "- **풋콜** — 1.0+ 헤지/공포. 0.50~0.70은 콜 편중=낙관.\n"
+            "- **High-Low** — 0.5 아래 첫 상승일이 조정 바닥 힌트. 0.71은 트리거 아님.\n"
+            "- **Bulls vs Bears** — 강세 높고 약세 극소=군중 낙관=경계.\n"
+            "- **Margin Debt** — 55% 초과가 대형 천정 경고. 지금은 38.6%(2026-07).\n"
+            "- 다섯을 평균 내서 사지 않는다. 분산일·FTD·리더 피벗이 먼저다."
+        )
+
+    try:
+        import plotly.graph_objects as go
+        from plotly.subplots import make_subplots
+        xs = [str(r.get("date"))[:10] for r in hist]
+        fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08,
+                            subplot_titles=("VIX · High-Low · Put/Call", "Bulls vs Bears %", "Margin YoY %"))
+        fig.add_trace(go.Scatter(x=xs, y=[r.get("vix") for r in hist], name="VIX", mode="lines+markers"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=xs, y=[r.get("high_low") for r in hist], name="High-Low", mode="lines+markers"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=xs, y=[r.get("put_call") for r in hist], name="Put/Call", mode="lines+markers"), row=1, col=1)
+        fig.add_trace(go.Scatter(x=xs, y=[r.get("bulls") for r in hist], name="Bulls %", mode="lines+markers"), row=2, col=1)
+        fig.add_trace(go.Scatter(x=xs, y=[r.get("bears") for r in hist], name="Bears %", mode="lines+markers"), row=2, col=1)
+        fig.add_trace(go.Scatter(x=xs, y=[r.get("margin_yoy") for r in hist], name="Margin YoY", mode="lines+markers"), row=3, col=1)
+        fig.add_hline(y=55, line_dash="dot", line_color="#c44", annotation_text="55%", row=3, col=1)
+        fig.update_layout(height=560, margin=dict(t=48, b=24, l=40, r=20),
+                          legend=dict(orientation="h", y=1.08),
+                          title="심리지표 누적 (9/1 · 9/3 · 9/8 인쇄)")
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception:
+        st.caption("그래프 생략. 표로 본다.")
+        st.dataframe(hist, hide_index=True, use_container_width=True)
+
+    st.markdown(
+        '<div class="ev"><b>시장 종합의견</b> · 분산 작업 5 후보 · 신규 추격 0<br>'
+        '<span class="m">공식 Pulse(9/3) 노출 60-80% · 분산 NAS 4 / SPX 3. FTD 2026-06-02. '
+        "화요 9/8 하락+거래량증가 = 분산일 후보. 작업카운트 NAS 5 / SPX 4. "
+        "VIX 14.6 안일 · P/C 0.71 · H/L 0.71 · Bulls 54.9 / Bears 17.6 · Margin 38.6%. "
+        "아래 67점 탐욕은 앱 공포탐욕이다. 5대 심리와 섞지 말 것.</span></div>",
+        unsafe_allow_html=True)
