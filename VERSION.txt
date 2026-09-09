@@ -1,8 +1,6 @@
-CANSLIM TERMINAL v14.13
-시장 탭: LIVE 3열(CNN·앱·IBD) 아래에 IBD 5대 심리지표.
-VIX · 풋콜 · High-Low · Bulls/Bears · Margin Debt YoY.
-인쇄본을 desk.lists.psycho_history 에 날짜별로 쌓고 추이 그래프를 그린다.
-지표 설명 + FTD·분산일·화요 후보DD를 합친 오늘 종합의견.
-시드 2026-09-01 / 09-03 / 09-08 (DailyPsycho_090826).
-캐시 /tmp/canslim_v14_13_patched.py
-추격 금지. 작업 분산 5 후보면 신규 없음.
+CANSLIM TERMINAL v14.19
+시장탭 3층: A 미국세션종가(VIX HYG IWM-SPY RSP-SPY) / B IBD전일인쇄 / C HY OAS레짐.
+폼 psycho_edit_v19. 훅 MKT_PSYCHO_HOOK_V14_19.
+캐시 /tmp/canslim_v14_19_patched.py + patches/ibd_mkt_layers_v14_19.py
+핵심수정: render_market_psycho 정의를 TAB 1 실행 앞에 삽입. 예전엔 파일 끝에 붙어 NameError.
+한국 저녁 판정=종가 스냅. 분단위 폴링 없음. 추격금지.
