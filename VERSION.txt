@@ -1,6 +1,8 @@
-CANSLIM TERMINAL v14.12
-시장 탭 LIVE 패널: 앱이 받은 지수로 즉시 재계산.
-CNN 공식 Fear & Greed vs 앱 자체 산출 vs IBD Pulse(노출·분산·FTD) 3열 비교.
-CNN 호출에 Referer를 넣어 418을 피함. 실패 시 2026-09-04 공식값 41.9 Fear를 표시.
-캐시 /tmp/canslim_v14_12_patched.py
-「지금 다시 계산」이 CNN·yfinance 캐시를 비운다.
+CANSLIM TERMINAL v14.13
+시장 탭: LIVE 3열(CNN·앱·IBD) 아래에 IBD 5대 심리지표.
+VIX · 풋콜 · High-Low · Bulls/Bears · Margin Debt YoY.
+인쇄본을 desk.lists.psycho_history 에 날짜별로 쌓고 추이 그래프를 그린다.
+지표 설명 + FTD·분산일·화요 후보DD를 합친 오늘 종합의견.
+시드 2026-09-01 / 09-03 / 09-08 (DailyPsycho_090826).
+캐시 /tmp/canslim_v14_13_patched.py
+추격 금지. 작업 분산 5 후보면 신규 없음.
