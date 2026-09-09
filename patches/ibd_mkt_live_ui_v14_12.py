@@ -87,7 +87,7 @@ def render_market_live(ctx=None):
     cnn_src = cnn.get("source") or "CNN"
 
     step_header("세 소스 비교", "CNN 공식 · 앱 자체 산출 · IBD Pulse",
-                "세 숫자는 같은 물건이 아니다. 나란히 놓고 어귷남을 읽는다.")
+                "세 숫자는 같은 물건이 아니다. 나란히 놓고 어긋남을 읽는다.")
 
     c1, c2, c3 = st.columns(3)
     try:
@@ -158,7 +158,7 @@ def render_market_live(ctx=None):
         else:
             bits.append("세 숫자가 같아도 매수 허가가 아니다. 허가 창은 적합도와 FTD훈련 탭에서 손으로 센다.")
         st.markdown(
-            f'<div class="ev"><b>어귷남 읽기</b><br><span class="m">{" ".join(bits)} '
+            f'<div class="ev"><b>어긋남 읽기</b><br><span class="m">{" ".join(bits)} '
             f"앱-CNN {gap_ca:+.0f} · IBD-CNN {gap_ci:+.0f}.</span></div>",
             unsafe_allow_html=True)
     except Exception:
@@ -172,3 +172,16 @@ def render_market_live(ctx=None):
             "CNN Fear & Greed · 앱 fear_greed() · MARKET PULSE", "oneil")
     except Exception:
         st.caption("CNN=감정 / 앱=근사 / IBD=노출·분산·FTD. 섞어 사지 않는다.")
+
+    # v14.13 psycho panel (files already on main/patches)
+    try:
+        if not callable(globals().get("render_market_psycho")):
+            import urllib.request
+            _base = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
+            _blob = ""
+            for _n in ("ibd_mkt_psycho_v14_13.py", "ibd_mkt_psycho_fn_v14_13.py", "ibd_mkt_psycho_fn2_v14_13.py", "ibd_mkt_psycho_ui_v14_13.py"):
+                _blob += urllib.request.urlopen(_base + _n, timeout=30).read().decode("utf-8") + "\n"
+            exec(_blob, globals(), globals())
+        render_market_psycho(ctx)
+    except Exception:
+        pass
