@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.16 — 시장탭 5대 심리 수동입력 + 추이그래프."""
+"""CANSLIM TERMINAL v14.17 — 시장탭 5대 심리 + HY OAS 리스크 3종."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,23 +9,24 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_16_patched.py")
+_CACHE = Path("/tmp/canslim_v14_17_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
-_HOOK_MARK = "MKT_PSYCHO_HOOK_V14_16"
+_HOOK_MARK = "MKT_PSYCHO_HOOK_V14_17"
 _TAB1 = 'with TABS[1], guard("시장"):'
 _HOOK_BLOCK = (
     'with TABS[1], guard("시장"):\n'
-    '    # MKT_PSYCHO_HOOK_V14_16\n'
+    '    # MKT_PSYCHO_HOOK_V14_17\n'
     '    try:\n'
     '        render_market_psycho(CTX)\n'
     '    except Exception as _pe:\n'
     '        st.caption("심리패널: " + str(_pe))\n'
-    '        _a,_b,_c,_d,_e = st.columns(5)\n'
+    '        _a,_b,_c,_d,_e,_f = st.columns(6)\n'
     '        _a.metric("VIX", "14.6")\n'
-    '        _b.metric("풋콜", "0.71")\n'
-    '        _c.metric("High-Low", "0.71")\n'
-    '        _d.metric("Bulls/Bears", "54.9 / 17.6")\n'
-    '        _e.metric("Margin YoY", "38.6%")\n'
+    '        _b.metric("풇콜", "0.71")\n'
+    '        _c.metric("HY OAS", "2.68%")\n'
+    '        _d.metric("High-Low", "0.71")\n'
+    '        _e.metric("Bulls/Bears", "54.9 / 17.6")\n'
+    '        _f.metric("Margin YoY", "38.6%")\n'
 )
 
 _HELPER = '''
@@ -65,6 +66,7 @@ def _fetch(name):
 
 
 def _load():
+    # 예전 조립본은 def 만 있고 호출이 없었다. 새 캐시만 인정한다.
     for old in Path("/tmp").glob("canslim_v14_*_patched.py"):
         if old.resolve() != _CACHE.resolve():
             try:
@@ -91,7 +93,9 @@ def _load():
                 and "MKT_LIVE_UI_V14_12" in src
                 and _HOOK_MARK in src
                 and "IBD 5대 심리지표" in src
-                and "psycho_edit_v16" in src
+                and "psycho_edit_v17" in src
+                and "MKT_RISK_TRIO_V14_17" in src
+                and "hy_oas" in src
                 and "TABS[11]" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
@@ -219,12 +223,14 @@ def _load():
     if "MKT_LIVE_V14_12" not in src or "MKT_LIVE_UI_V14_12" not in src or "render_market_live(" not in src:
         raise RuntimeError("v14.12 market live panel did not apply")
     if _HOOK_MARK not in src:
-        raise RuntimeError("v14.16 psycho hook did not inject into 시장 tab")
-    if "psycho_edit_v16" not in src:
-        raise RuntimeError("v14.16 psycho editor missing from live UI patch")
+        raise RuntimeError("v14.17 psycho hook did not inject into 시장 tab")
+    if "psycho_edit_v17" not in src:
+        raise RuntimeError("v14.17 psycho editor missing from live UI patch")
+    if "MKT_RISK_TRIO_V14_17" not in src or "hy_oas" not in src:
+        raise RuntimeError("v14.17 HY OAS risk trio missing")
     if "IBD 5대 심리지표" not in src:
-        raise RuntimeError("v14.16 IBD 5 psycho heading missing")
-    _old_fg = 'step_header("FEAR & GREED", "공포탐욕지수", "군중이 어디에 서 있는가")'
+        raise RuntimeError("v14.17 IBD 5 psycho heading missing")
+    _old_fg = 'step_header("FEAR & GREED", "포공탐욕지수", "군중이 어디에 서 있는가")'
     _new_fg = 'step_header("FEAR & GREED (앱 자체)", "위 5대 심리와 다른 물건", "CNN식 근사 67점대. IBD 인쇄 심리가 아니다")'
     if _old_fg in src:
         src = src.replace(_old_fg, _new_fg, 1)
