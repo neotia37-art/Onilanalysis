@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.14 — force-call IBD 5 psycho on 시장 tab."""
+"""CANSLIM TERMINAL v14.15 — inline IBD 5 metric cards at top of 시장 tab."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,17 +9,21 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_14_patched.py")
+_CACHE = Path("/tmp/canslim_v14_15_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
-_HOOK_MARK = "MKT_PSYCHO_HOOK_V14_14"
+_HOOK_MARK = "MKT_PSYCHO_HOOK_V14_15"
+_TAB1 = 'with TABS[1], guard("시장"):'
 _HOOK_BLOCK = (
-    '        try:\n'
-    '            render_market_live(CTX)  # MKT_PSYCHO_HOOK_V14_14\n'
-    '        except Exception:\n'
-    '            try:\n'
-    '                render_market_psycho(CTX)\n'
-    '            except Exception as _pe:\n'
-    '                st.caption("IBD 5대 심리 패널 실패: " + str(_pe))\n'
+    'with TABS[1], guard("시장"):\n'
+    '    # MKT_PSYCHO_HOOK_V14_15\n'
+    '    st.markdown("##### IBD 5대 심리지표 · 2026-09-08 인쇄")\n'
+    '    _a,_b,_c,_d,_e = st.columns(5)\n'
+    '    _a.metric("VIX", "14.6", "안일 · 45미만")\n'
+    '    _b.metric("풋콜", "0.71", "콜 편중")\n'
+    '    _c.metric("High-Low", "0.71", "바닥감시 아님")\n'
+    '    _d.metric("Bulls/Bears", "54.9 / 17.6", "군중 낙관")\n'
+    '    _e.metric("Margin YoY", "38.6%", "경고선 55%")\n'
+    '    st.caption("작업분산 NAS 5 후보 · 신규 추격 0 · 아래 67점은 앱 공포탐욕")\n'
 )
 
 _HELPER = '''
@@ -86,6 +90,7 @@ def _load():
                 and "MKT_LIVE_UI_V14_12" in src
                 and _HOOK_MARK in src
                 and "IBD 5대 심리지표" in src
+                and '_a.metric("VIX"' in src
                 and "TABS[11]" in src):
             return src
     with urllib.request.urlopen(_SRC_URL, timeout=45) as r:
@@ -153,8 +158,8 @@ def _load():
         src = src.replace(a_mkt, a_mkt + "\n" + desk_m, 1)
     if "MKT_LIVE_V14_12" not in src or "render_market_psycho(" not in src:
         src += "\n\n" + mktlive + "\n"
-    if _HOOK_MARK not in src and a_mkt in src:
-        src = src.replace(a_mkt, a_mkt + "\n" + _HOOK_BLOCK, 1)
+    if _HOOK_MARK not in src and _TAB1 in src:
+        src = src.replace(_TAB1, _HOOK_BLOCK, 1)
     a_65 = "        # STEP 6.5 종목 FTD · 분산일 (매도일) — 시장 규칙을 이 종목에 이식"
     if "I · 기관보증" not in src and a_65 in src:
         src = src.replace(a_65, desk_s + "\n" + a_65, 1)
@@ -208,14 +213,14 @@ def _load():
         raise RuntimeError("v14.11 index chart gold did not apply")
     if "MKT_LIVE_V14_12" not in src or "render_market_psycho(" not in src:
         src += "\n\n" + mktlive + "\n"
-    if _HOOK_MARK not in src and a_mkt in src:
-        src = src.replace(a_mkt, a_mkt + "\n" + _HOOK_BLOCK, 1)
+    if _HOOK_MARK not in src and _TAB1 in src:
+        src = src.replace(_TAB1, _HOOK_BLOCK, 1)
     if "MKT_LIVE_V14_12" not in src or "MKT_LIVE_UI_V14_12" not in src or "render_market_live(" not in src:
         raise RuntimeError("v14.12 market live panel did not apply")
-    if _HOOK_MARK not in src:
-        raise RuntimeError("v14.14 psycho hook did not inject into 시장 tab")
+    if _HOOK_MARK not in src or '_a.metric("VIX"' not in src:
+        raise RuntimeError("v14.15 inline 5-metric hook did not inject into 시장 tab")
     if "IBD 5대 심리지표" not in src:
-        raise RuntimeError("v14.14 IBD 5 psycho cards missing from live UI patch")
+        raise RuntimeError("v14.15 IBD 5 psycho heading missing")
     _old_fg = 'step_header("FEAR & GREED", "공포탐욕지수", "군중이 어디에 서 있는가")'
     _new_fg = 'step_header("FEAR & GREED (앱 자체)", "위 5대 심리와 다른 물건", "CNN식 근사 67점대. IBD 인쇄 심리가 아니다")'
     if _old_fg in src:
