@@ -6,3 +6,4 @@ live_ui는 조립에서 제외(v14.17 동일취급 금지).
 A=미국세션종가 VIX/HYG/IWM-SPY/RSP-SPY · B=IBD전일인쇄 · C=HY OAS레짐.
 한국 저녁 기본값=막 끝난 미국 세션 종가 + 전일 인쇄 + 최신 OAS.
 보수: A층 2악 또는 분산5+B/C안일이면 신규 0.
+2026-09-09 Pulse 공식 NAS5/SPX4 · DailyPsycho VIX 15.9 P/C 0.72 · 신규 추격 0.

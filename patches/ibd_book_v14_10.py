@@ -19,7 +19,7 @@ CHART_READ_20260904 = {
         "weekly_vol_vs_10w": 85,
         "weekly_vol": 13.0,
         "base": "6~7월 17~20 선반(플랫) 후 8월 초 19.92 부근 돌파. 지금은 피벗 +25% 연장. 정석 3주 밀착 아님. 2단계 후반.",
-        "dd": "8/28 고가 25.89 음봉이 종목 분산 후보. 이후 24.4~25.9 횡보. 9/7 거래량 2.1M = 50일 2.7M 대비 -21%라 최근 하락봉은 분산 캠페인 아님.",
+        "dd": "8/28 고가 25.89 음봉이 종목 분산 후보. 이후 24.4~25.9 횯보. 9/7 거래량 2.1M = 50일 2.7M 대비 -21%라 최근 하락봉은 분산 캠페인 아님.",
         "weekly": "10주선 위. 주 거래량 +85% vs 10주(13.0/12.5M). 주봉 종가가 10주를 깨지 않음. RS 96.",
         "action": "보유 유지 · 추가 금지. 익절 26.06 종가. 방어는 10주선 종가 + 대량 이탈.",
         "add_ban": True,
@@ -115,10 +115,23 @@ def ensure_book_seed(desk):
     lists = desk.setdefault("lists", {})
     lists["chart_read_20260904"] = CHART_READ_20260904
     lists["index_chart_read_20260907"] = INDEX_CHART_READ_20260907
-    if not lists.get("market_pulse_latest"):
-        lists["market_pulse_latest"] = dict(INDEX_CHART_READ_20260907["pulse_anchor"])
-        lists["market_pulse_latest"]["source"] = "IBD 20260907 차트 + Pulse 9/3"
-        lists["market_pulse_latest"]["headline"] = "Software rally, lower yields fuel broad-based gains"
+    PULSE_20260909 = {
+        "date": "2026-09-09",
+        "source": "MP090926.jpg",
+        "headline": "Stocks drop as oil, rates rise",
+        "exposure": "60%-80%",
+        "dist_nasdaq": 5,
+        "dist_spx": 4,
+        "leaders_up": ["CHYM", "NET", "HPE", "TNK"],
+        "leaders_down": ["DLTR", "XP", "LIFE", "KSPI", "NAVN"],
+        "ftd": "2026-06-02",
+        "market_score": 60,
+        "note": "공식 분산 NAS 5 / SPX 4. 수요일 하락+거래량감소라 그날은 분산 아님. 새 FTD 없음. 추격 0.",
+    }
+    lists["market_pulse_20260909"] = PULSE_20260909
+    cur = lists.get("market_pulse_latest") or {}
+    if str(cur.get("date") or "") < "2026-09-09":
+        lists["market_pulse_latest"] = dict(PULSE_20260909)
     notes = desk.setdefault("notes", {})
     for tk, rec in CHART_READ_20260904.items():
         body = (f'{rec.get("date")} IBD일·주봉. {rec.get("base")} {rec.get("dd")} '
