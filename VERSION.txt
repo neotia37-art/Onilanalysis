@@ -1,6 +1,8 @@
-CANSLIM TERMINAL v14.19
-시장탭 3층: A 미국세션종가(VIX HYG IWM-SPY RSP-SPY) / B IBD전일인쇄 / C HY OAS레짐.
-폼 psycho_edit_v19. 훅 MKT_PSYCHO_HOOK_V14_19.
-캐시 /tmp/canslim_v14_19_patched.py + patches/ibd_mkt_layers_v14_19.py
-핵심수정: render_market_psycho 정의를 TAB 1 실행 앞에 삽입. 예전엔 파일 끝에 붙어 NameError.
-한국 저녁 판정=종가 스냅. 분단위 폴링 없음. 추격금지.
+CANSLIM TERMINAL v14.21
+원인: v14.17 live_ui가 render_market_psycho를 동일취급 리스크3종으로 정의하고, v14.20 레이어 파일은 GitHub에 없어 시장탭이 옛 FEAR&GREED로 보임.
+수정: 3층 패널을 app.py에 내장 + patches/ibd_mkt_layers_v14_21.py 배포.
+live_ui는 조립에서 제외(v14.17 동일취급 금지).
+훅 MKT_PSYCHO_HOOK_V14_21. 캐시 /tmp/canslim_v14_21_patched.py.
+A=미국세션종가 VIX/HYG/IWM-SPY/RSP-SPY · B=IBD전일인쇄 · C=HY OAS레짐.
+한국 저녁 기본값=막 끝난 미국 세션 종가 + 전일 인쇄 + 최신 OAS.
+보수: A층 2악 또는 분산5+B/C안일이면 신규 0.
