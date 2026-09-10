@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.19 — 시장탭 3층 판정 A종가/B인쇄/C레짐."""
+"""CANSLIM TERMINAL v14.20 — 시장탭 3층 판정 A종가/B인쇄/C레짐."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,19 +9,19 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_19_patched.py")
+_CACHE = Path("/tmp/canslim_v14_20_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
-_HOOK_MARK = "MKT_PSYCHO_HOOK_V14_19"
+_HOOK_MARK = "MKT_PSYCHO_HOOK_V14_20"
 _TAB1 = 'with TABS[1], guard("시장"):'
 _TAB1_ANCHOR = "# TAB 1 — 시장"
 _HOOK_BLOCK = (
     'with TABS[1], guard("시장"):\n'
-    '    # MKT_PSYCHO_HOOK_V14_19\n'
-    '    st.caption("CANSLIM v14.19 3-layer market desk")\n'
+    '    # MKT_PSYCHO_HOOK_V14_20\n'
+    '    st.caption("CANSLIM v14.20 3-layer A-close / B-print / C-OAS")\n'
     '    try:\n'
     '        render_market_psycho(CTX)\n'
     '    except Exception as _pe:\n'
-    '        st.error("v14.19 layer panel: " + str(_pe))\n'
+    '        st.error("v14.20 layer panel: " + str(_pe))\n'
     '        _a,_b,_c,_d = st.columns(4)\n'
     '        _a.metric("VIX close", "--")\n'
     '        _b.metric("HYG %", "--")\n'
@@ -58,16 +58,18 @@ _OLD_TABS = '''TABS = st.tabs(["  대시보드  ", "  시장  ", "  환율  ", "
 _NEW_TABS = '''TABS = st.tabs(["  대시보드  ", "  시장  ", "  환율  ", "  개별종목  ", "  차트스쿨  ",
                 "  분석보강  ", "  뉴스  ", "  종목스캔  ", "  my투자  ", "  사용 가이드  ",
                 "  기관동향  ", "  FTD훈련  "])
-st.caption("CANSLIM TERMINAL v14.19 · 시장탭 3층 판정 A종가/B인쇄/C OAS")'''
+st.caption("CANSLIM TERMINAL v14.20 · 시장탭 3층 A종가/B인쇄/C OAS")'''
 
 
 def _fetch(name):
     with urllib.request.urlopen(_PATCH_BASE + name, timeout=45) as r:
         return r.read().decode("utf-8")
 
+_EMBEDDED_LAYERS = ''
+
 def _inject_layers_before_tab1(src, layers):
     """함수 정의가 TABS[1] 실행보다 앞에 있어야 한다. 뒤에 붙이면 NameError."""
-    if "MKT_LAYERS_V14_19" in src and "def render_market_psycho" in src:
+    if "시장 3층 판정" in src and "def render_market_psycho" in src:
         i_def = src.find("def render_market_psycho")
         i_tab = src.find(_TAB1_ANCHOR)
         if i_def >= 0 and i_tab >= 0 and i_def < i_tab:
@@ -125,9 +127,19 @@ def _load():
     book8 = _fetch("ibd_book_v14_8.py")
     book10 = _fetch("ibd_book_v14_10.py")
     drill = _fetch("ibd_ftd_drill_tab.py")
+    _ly = ""
+    for _name in ("ibd_mkt_layers_v14_20.py", "ibd_mkt_layers_v14_18.py"):
+        try:
+            _ly = _fetch(_name)
+        except Exception:
+            _ly = ""
+        if "시장 3층 판정" in _ly and "def render_market_psycho" in _ly:
+            break
+    if "시장 3층 판정" not in (_ly or ""):
+        raise RuntimeError("3-layer patch missing on GitHub (tried v14.20 then v14.18)")
     mktlive = (_fetch("ibd_mkt_live_v14_12.py") + "\n"
                + _fetch("ibd_mkt_live_ui_v14_12.py") + "\n"
-               + _fetch("ibd_mkt_layers_v14_19.py"))
+               + _ly)
     basefix = (_fetch("ibd_base_fix_v14_7a1.py") + "\n"
                + _fetch("ibd_base_fix_v14_7a2.py") + "\n"
                + _fetch("ibd_base_fix_v14_7b.py"))
@@ -220,16 +232,16 @@ def _load():
     i_def = src.find("def render_market_psycho")
     i_hook = src.find(_HOOK_MARK)
     if i_def < 0 or i_hook < 0 or i_def > i_hook:
-        raise RuntimeError("v14.19 render_market_psycho must be defined BEFORE market tab hook")
+        raise RuntimeError("v14.20 render_market_psycho must be defined BEFORE market tab hook")
     if "MKT_LIVE_V14_12" not in src or "render_market_live(" not in src:
         raise RuntimeError("v14.12 market live panel did not apply")
     if _HOOK_MARK not in src:
-        raise RuntimeError("v14.19 layer hook did not inject into market tab")
-    if "psycho_edit_v19" not in src or "MKT_LAYERS_V14_19" not in src:
-        raise RuntimeError("v14.19 3-layer editor missing")
-    if "시장 3층 판정" not in src:
-        raise RuntimeError("v14.19 3-layer heading missing")
-    _old_fg = 'step_header("FEAR & GREED", "공포탐욕지수", "군중이 어디에 서 있는가")'
+        raise RuntimeError("v14.20 layer hook did not inject into market tab")
+    if "시장 3층 판정" not in src or "def render_market_psycho" not in src:
+        raise RuntimeError("v14.20 3-layer editor missing")
+    if "psycho_edit_v20" not in src and "psycho_edit_v18" not in src:
+        raise RuntimeError("v14.20 psycho form missing")
+    _old_fg = 'step_header("FEAR & GREED", "포공탐욕지수", "군중이 어디에 서 있는가")'
     _new_fg = 'step_header("FEAR & GREED (앱 자체)", "위 5대 심리와 다른 물건", "CNN식 근사 67점대. IBD 인쇄 심리가 아니다")'
     if _old_fg in src:
         src = src.replace(_old_fg, _new_fg, 1)
