@@ -1,7 +1,9 @@
 # v14.11 chart read: IBD daily/weekly 20260907 WT PBF + NASDAQ/S&P
+# v14.22 seed: 2026-09-15 official Pulse NAS7/SPX6 + DailyPsycho VIX 18.2 P/C 0.78
 CHART_READ_V14_10 = True
 CHART_READ_V14_11 = True
 BOOK_REV_CHART_20260904 = 11
+PULSE_SEED_V14_22 = True
 
 CHART_READ_20260904 = {
     "WT": {
@@ -19,7 +21,7 @@ CHART_READ_20260904 = {
         "weekly_vol_vs_10w": 85,
         "weekly_vol": 13.0,
         "base": "6~7월 17~20 선반(플랫) 후 8월 초 19.92 부근 돌파. 지금은 피벗 +25% 연장. 정석 3주 밀착 아님. 2단계 후반.",
-        "dd": "8/28 고가 25.89 음봉이 종목 분산 후보. 이후 24.4~25.9 횯보. 9/7 거래량 2.1M = 50일 2.7M 대비 -21%라 최근 하락봉은 분산 캠페인 아님.",
+        "dd": "8/28 고가 25.89 음봉이 종목 분산 후보. 이후 24.4~25.9 횡보. 9/7 거래량 2.1M = 50일 2.7M 대비 -21%라 최근 하락봉은 분산 캠페인 아님.",
         "weekly": "10주선 위. 주 거래량 +85% vs 10주(13.0/12.5M). 주봉 종가가 10주를 깨지 않음. RS 96.",
         "action": "보유 유지 · 추가 금지. 익절 26.06 종가. 방어는 10주선 종가 + 대량 이탈.",
         "add_ban": True,
@@ -74,11 +76,11 @@ INDEX_CHART_READ_20260907 = {
         "tape": "9/7 거래량 4.1B < 50일 5.1B. 고점 유지만 있고 대량 분산 캠페인 모습은 아님.",
     },
     "pulse_anchor": {
-        "date": "2026-09-03",
-        "dist_nasdaq": 4,
-        "dist_spx": 3,
+        "date": "2026-09-15",
+        "dist_nasdaq": 7,
+        "dist_spx": 6,
         "ftd": "2026-06-02",
-        "exposure": "60%-80%",
+        "exposure": "40%-60%",
     },
     "hand_verdict": {
         "2026-08-18": "아님-QQQ프록시",
@@ -86,6 +88,8 @@ INDEX_CHART_READ_20260907 = {
         "2026-08-24": "아님-QQQ프록시",
         "2026-09-01": "아님-QQQ프록시",
         "2026-09-04": "아님-평균아래·프록시과대",
+        "2026-09-14": "공식-거래량증가하락 NAS6/SPX5",
+        "2026-09-15": "공식-이틀연속 거래량증가하락 NAS7/SPX6",
     },
 }
 
@@ -128,10 +132,40 @@ def ensure_book_seed(desk):
         "market_score": 60,
         "note": "공식 분산 NAS 5 / SPX 4. 수요일 하락+거래량감소라 그날은 분산 아님. 새 FTD 없음. 추격 0.",
     }
+    PULSE_20260915 = {
+        "date": "2026-09-15",
+        "source": "MP09152026-638x1024.jpg + DailyPsycho_091526.pdf",
+        "headline": "Second straight drop in higher volume",
+        "exposure": "40%-60%",
+        "dist_nasdaq": 7,
+        "dist_spx": 6,
+        "leaders_up": ["CRWD", "DT", "SUN", "GH", "JPM", "ECO", "PBF", "YPF"],
+        "leaders_down": ["ASND", "BK", "ENVA", "HSBC", "LFST", "TVTX", "WT"],
+        "ftd": "2026-06-02",
+        "market_score": 45,
+        "note": "공식 분산 NAS 7 / SPX 6. 이틀 연속 하락+거래량 증가. FTD 2026-06-02 실효. 신규 추격 0. 위성 잠금.",
+    }
+    PSYCHO_20260915 = {
+        "date": "2026-09-15",
+        "vix": 18.2,
+        "put_call": 0.78,
+        "high_low": None,
+        "bulls": 50.0,
+        "bears": 30.9,
+        "margin_yoy": 38.6,
+        "source": "DailyPsycho_091526 + MP09152026",
+        "note": "VIX 18.2 · P/C 0.78 · 불 50.0 / 베어 30.9. Pulse 40-60 DD NAS7/SPX6.",
+    }
     lists["market_pulse_20260909"] = PULSE_20260909
+    lists["market_pulse_20260915"] = PULSE_20260915
     cur = lists.get("market_pulse_latest") or {}
-    if str(cur.get("date") or "") < "2026-09-09":
-        lists["market_pulse_latest"] = dict(PULSE_20260909)
+    if str(cur.get("date") or "") < "2026-09-15":
+        lists["market_pulse_latest"] = dict(PULSE_20260915)
+    hist = list(lists.get("psycho_history") or [])
+    by_d = {str(x.get("date") or "")[:10]: x for x in hist}
+    by_d["2026-09-15"] = dict(PSYCHO_20260915)
+    lists["psycho_history"] = [by_d[k] for k in sorted(by_d)]
+    lists["psycho_latest"] = by_d.get("2026-09-15") or lists.get("psycho_latest") or PSYCHO_20260915
     notes = desk.setdefault("notes", {})
     for tk, rec in CHART_READ_20260904.items():
         body = (f'{rec.get("date")} IBD일·주봉. {rec.get("base")} {rec.get("dd")} '
