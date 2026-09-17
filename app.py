@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.21 — 시장탭 3층 판정 A종가/B인쇄/C레짐."""
+"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,7 +9,7 @@ _SRC_URL = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "8d17f376294b2726722485d3dc18212a92904e5e/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_21_patched.py")
+_CACHE = Path("/tmp/canslim_v14_23_patched.py")
 _PATCH_BASE = "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/main/patches/"
 _HOOK_MARK = "MKT_PSYCHO_HOOK_V14_21"
 _TAB1 = 'with TABS[1], guard("시장"):'
@@ -58,17 +58,26 @@ _OLD_TABS = '''TABS = st.tabs(["  대시보드  ", "  시장  ", "  환율  ", "
 _NEW_TABS = '''TABS = st.tabs(["  대시보드  ", "  시장  ", "  환율  ", "  개별종목  ", "  차트스쿨  ",
                 "  분석보강  ", "  뉴스  ", "  종목스캔  ", "  my투자  ", "  사용 가이드  ",
                 "  기관동향  ", "  FTD훈련  "])
-st.caption("CANSLIM TERMINAL v14.21 · 시장탭 3층 A종가/B인쇄/C OAS")'''
+st.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")'''
 
 
 def _fetch(name):
-    with urllib.request.urlopen(_PATCH_BASE + name, timeout=45) as r:
-        return r.read().decode("utf-8")
+    try:
+        with urllib.request.urlopen(_PATCH_BASE + name, timeout=45) as r:
+            return r.read().decode("utf-8")
+    except Exception:
+        for p in (
+            Path("/home/workdir/artifacts/patches") / name,
+            Path(__file__).resolve().parent / "patches" / name,
+        ):
+            if p.exists():
+                return p.read_text(encoding="utf-8")
+        raise
 
 _EMBEDDED_LAYERS = ''
 
+
 def _inject_layers_before_tab1(src, layers):
-    """함수 정의가 TABS[1] 실행보다 앞에 있어야 한다. 뒤에 붙이면 NameError."""
     if "시장 3층 판정" in src and "def render_market_psycho" in src:
         i_def = src.find("def render_market_psycho")
         i_tab = src.find(_TAB1_ANCHOR)
@@ -106,6 +115,16 @@ def _load():
         src = src.replace(_OLD_EARN, _NEW_EARN, 1)
     if _OLD_TABS in src:
         src = src.replace(_OLD_TABS, _NEW_TABS, 1)
+    src = src.replace("q, qk = growth_table(q_tab, 4, 3)",
+                      "q, qk = growth_table(q_tab, 4, 6)", 1)
+    src = src.replace(
+        'step_header("STEP 3", "C · A — 실적 성장 (최근 3분기 · 최근 3년)",\n'
+        '                        "오닐: 3분기 연속 +25% · 3년 연속 이익 증가")',
+        'step_header("STEP 3", "C · A — 실적 성장 (최근 6분기 · 최근 3년)",\n'
+        '                        "오닐: 분기 전년동기 +25% · 3년 연속 이익 증가 · 최우선은 동시 충족")',
+        1)
+    src = src.replace("tk.get_earnings_dates(limit=8)",
+                      "tk.get_earnings_dates(limit=16)")
     ftd = _fetch("stock_ftd_engine.py") + "\n" + _fetch("stock_ftd_detect.py") + "\n" + _fetch("stock_ftd_review.py") + "\n"
     fui = _fetch("stock_ftd_ui.py")
     ibd_e = _fetch("ibd_proxy_engine.py")
@@ -120,6 +139,24 @@ def _load():
     inst = _fetch("ibd_inst_tab.py")
     ck_e = _fetch("ibd_checkup_full.py")
     ck_u = _fetch("ibd_checkup_ui.py")
+    try:
+        eps_st = _fetch("ibd_eps_streak_v14_23.py")
+    except Exception:
+        eps_st = ""
+    def _eps_ok(s):
+        return ("def eps_streak_from_fnd" in (s or "") and "def render_eps_streak" in (s or ""))
+    if not _eps_ok(eps_st):
+        try:
+            eps_st = (eps_st or "") + "\n" + _fetch("ibd_eps_streak_v14_23b.py")
+        except Exception:
+            pass
+    if not _eps_ok(eps_st):
+        try:
+            eps_st = _fetch("ibd_eps_streak_v14_23a.py") + "\n" + _fetch("ibd_eps_streak_v14_23b.py")
+        except Exception:
+            pass
+    if not _eps_ok(eps_st):
+        raise RuntimeError("v14.23 EPS streak patches missing on GitHub")
     book4 = _fetch("ibd_book_v14_4.py")
     book5 = _fetch("ibd_book_v14_5.py")
     book6 = _fetch("ibd_book_v14_6.py")
@@ -145,7 +182,7 @@ def _load():
     basefix = (_fetch("ibd_base_fix_v14_7a1.py") + "\n"
                + _fetch("ibd_base_fix_v14_7a2.py") + "\n"
                + _fetch("ibd_base_fix_v14_7b.py"))
-    book = book4 + "\n\n" + book5 + "\n\n" + book6 + "\n\n" + book8 + "\n\n" + book10
+    book = book4 + "\n\n" + book5 + "\n\n" + book6 + "\n\n" + book8 + "\n\n" + book10 + "\n\n" + eps_st
     a_idx = "def index_state(idf, min_gain, corr_pct):"
     if "def stock_distribution_days" not in src and a_idx in src:
         src = src.replace(a_idx, ftd + a_idx, 1)
@@ -158,6 +195,31 @@ def _load():
     a_s4 = "        # STEP 4 밸류에이션\n        step_header(\"STEP 4\", \"재무 · 밸류에이션\")"
     if "STEP 3b" not in src and a_s4 in src:
         src = src.replace(a_s4, ibd3 + a_s4, 1)
+    _s3b = "            _ed = eps_rating_detail(fnd, q_g, y_g)"
+    _s3b_new = (
+        "            try:\n"
+        "                if callable(globals().get(\"render_eps_streak\")):\n"
+        "                    render_eps_streak(fnd, market)\n"
+        "            except Exception as _es:\n"
+        "                st.caption(\"EPS 3년·6분기 패널: \" + str(_es))\n"
+        "            _ed = eps_rating_detail(fnd, q_g, y_g)"
+    )
+    if "render_eps_streak(fnd" not in src and _s3b in src:
+        src = src.replace(_s3b, _s3b_new, 1)
+    _sticky = "        sticky_bar(CTX, D)"
+    _sticky_new = (
+        "        sticky_bar(CTX, D)\n"
+        "        try:\n"
+        "            _es = eps_streak_from_fnd(fnd) if callable(globals().get(\"eps_streak_from_fnd\")) else None\n"
+        "            if _es and _es.get(\"priority\"):\n"
+        "                st.markdown(tag(\"최우선\", \"pass\") + "
+        "' <span class=\"hint\"><b>강력한 EPS 증가추세</b> · ' + str(_es.get(\"note\") or \"3년·분기 연속 +25%\") + "
+        "'. 시장이 닫혀 있으면 이 뱃지만으로 사지 않는다.</span>', unsafe_allow_html=True)\n"
+        "        except Exception:\n"
+        "            pass"
+    )
+    if "강력한 EPS 증가추세" not in src and _sticky in src:
+        src = src.replace(_sticky, _sticky_new, 1)
     a_s6 = "        # STEP 6 수급 — 한국은 기관/외국인 정밀 수집"
     if "70대 진입 추정" not in src and a_s6 in src:
         src = src.replace(a_s6, ibd5 + a_s6, 1)
@@ -221,6 +283,8 @@ def _load():
         src += "\n\ndef inst_rows_for(tk, desk):\n    return [x for x in (desk.get('inst') or []) if str(x.get('ticker','')).upper() == str(tk or '').upper()]\n"
     if "with TABS[11], guard(\"FTD훈련\")" not in src:
         src = src.rstrip() + "\n\n" + drill + "\n"
+    if "EPS_STREAK_V14_23" not in src or "def render_eps_streak" not in src:
+        raise RuntimeError("v14.23 EPS 3y/6q streak panel did not apply")
     if "CHECKUP_BOOK_V14_9" not in src:
         raise RuntimeError("v14.9 checkup book 0908 did not apply")
     if "CHART_READ_V14_11" not in src:
