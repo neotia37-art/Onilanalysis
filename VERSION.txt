@@ -1,7 +1,8 @@
-CANSLIM TERMINAL v14.22
-원인: 시장 Pulse·심리가 2026-09-09(NAS5/SPX4)에 멈춰 9/14·9/15 공식 분산이 앱에 안 보임.
-수정: patches/ibd_book_v14_10.py 시드에 2026-09-15 Pulse NAS7/SPX6 + DailyPsycho VIX 18.2 P/C 0.78.
-노출 40-60%. 리더 UP CRWD/DT/SUN/GH/JPM/ECO/PBF/YPF, DOWN ASND/BK/ENVA/HSBC/LFST/TVTX/WT.
-FTD 2026-06-02 실효. 보수 규칙 유지: 분산 5+ 이면 신규 0.
-훅 MKT_PSYCHO_HOOK_V14_21 유지. 캐시 /tmp/canslim_v14_21_patched.py.
-2026-09-16 KST seed.
+CANSLIM TERMINAL v14.23
+원인: 개별종목 탭이 최근 3분기만 보여주고 3년·6분기 EPS 연속증가를 분기별/년도별로 안 보여줌.
+수정: patches/ibd_eps_streak_v14_23.py — 연간 3년(전년대비) + 분기 최대 6개(전년동기).
+손익계산서 열이 짧으면 get_earnings_dates(limit=16) Reported EPS로 보충.
+최우선 뱃지: 3년 모두 +25% AND 확보 분기(최소 4) 모두 +25% AND 최근 분기 +25%.
+시장(M) 닫힘이면 뱃지만 보고 매수 금지. STEP 3 제목도 6분기·3년으로 수정.
+훅 MKT_PSYCHO_HOOK_V14_21 유지. 캐시 /tmp/canslim_v14_23_patched.py.
+2026-09-17 KST.
