@@ -1,7 +1,8 @@
 CANSLIM TERMINAL v14.24
-추가: 회사개요 탭(TABS[12]). CRWD·APH·MU·TSM·PANW·ANET·LITE·NVDA·PLTR 사업/매출/지배력/리스크 + IR·뉴스 링크.
+추가: 회사개요 탭(TABS[12]). CRWD·APH·MU·TSM·PANW·ANET·LITE·NVDA·PLTR·DELL·HPE·VLO 사업/매출/리스크 + IR·뉴스 링크.
 수록: Pulse 2026-09-28 노출 80-100 DD NAS3/SPX6 (MP09282026.jpg).
 수록: CRWD Checkup 2026-09-29 Comp99 RS99 SMR C A/D A+ vs50 +22.18 추격금지.
+수록: ANET 2026-09-28 Comp99 RS94 SMR A A/D C / NVDA 2026-09-28 Comp99 RS88.
 시드 patches/ibd_book_v14_24.py + patches/ibd_company_tab_v14_24.py.
 캐시 /tmp/canslim_v14_24_patched.py.
 2026-09-30 KST.
