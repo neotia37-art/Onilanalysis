@@ -12,21 +12,31 @@ _V23 = (
 _CACHE = Path("/tmp/canslim_v14_24_loader.py")
 
 
+def _sub(src: str, old: str, new: str, what: str) -> str:
+    """str.replace 1회. 검색 문자열이 없으면 조용히 넘어가지 않고 즉시 실패."""
+    if old not in src:
+        raise RuntimeError(f"v14.24 패치 대상 없음: {what}")
+    return src.replace(old, new, 1)
+
+
 def _mutate(src: str) -> str:
-    src = src.replace(
-        '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱇지."""',
+    src = _sub(
+        src,
+        '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
         '"""CANSLIM TERMINAL v14.24 — 회사개요 탭 + CRWD 9/29 + Pulse 9/28."""',
-        1,
+        "v14.23 docstring",
     )
-    src = src.replace(
+    src = _sub(
+        src,
         'Path("/tmp/canslim_v14_23_patched.py")',
         'Path("/tmp/canslim_v14_24_patched.py")',
-        1,
+        "v14.23 cache path",
     )
-    src = src.replace(
-        '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱇지")',
+    src = _sub(
+        src,
+        '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
         '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.24 · 회사개요 · Pulse 9/28 · CRWD 9/29")',
-        1,
+        "v14.23 TABS list + caption (회사개요 탭 추가)",
     )
     old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
     drill = _fetch("ibd_ftd_drill_tab.py")'''
@@ -69,7 +79,9 @@ def _mutate(src: str) -> str:
     if "COMPANY_TAB_V14_24" not in src or "def render_company_overview" not in src:
         raise RuntimeError("v14.24 company overview tab did not apply")
     if "CHECKUP_BOOK_V14_24" not in src:
-        raise RuntimeError("v14.24 checkup/pulse seed did not apply")'''
+        raise RuntimeError("v14.24 checkup/pulse seed did not apply")
+    if \'"  회사개요  "])\' not in src:
+        raise RuntimeError("v14.24 회사개요 tab label missing from TABS (TABS[12] would IndexError)")'''
     if old_k not in src:
         raise RuntimeError("v14.23 EPS check missing")
     src = src.replace(old_k, new_k, 1)
