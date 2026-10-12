@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.24 wrapper — mutates v14.23 loader then execs."""
+"""CANSLIM TERMINAL v14.25 wrapper — mutates v14.23 loader then execs."""
 from __future__ import annotations
 
 import urllib.request
@@ -35,7 +35,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.24 · 회사개요 · Pulse 9/28 · CRWD 9/29")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.25 · 회사개요 · 시장탭 정리")',
         "v14.23 TABS list + caption (회사개요 탭 추가)",
     )
     old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
@@ -85,6 +85,16 @@ def _mutate(src: str) -> str:
     if old_k not in src:
         raise RuntimeError("v14.23 EPS check missing")
     src = src.replace(old_k, new_k, 1)
+    # v14.25: 시장탭 B층 수동 입력 폼(psycho_edit_v18)·B+C 추이 그래프 삭제
+    # → v14.23 로더의 폼 존재 검사를 3층 패널(C층) 존재 검사로 교체
+    src = _sub(
+        src,
+        '''    if "psycho_edit_v21" not in src and "psycho_edit_v20" not in src and "psycho_edit_v18" not in src:
+        raise RuntimeError("v14.21 psycho form missing")''',
+        '''    if "C층 · 레짐" not in src:
+        raise RuntimeError("v14.25 3-layer panel missing")''',
+        "v14.23 psycho form check",
+    )
     return src
 
 

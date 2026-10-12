@@ -96,31 +96,6 @@ def load_psycho_book():
     return desk, hist, latest
 
 
-def save_psycho_row(desk, rec):
-    rec = dict(rec)
-    rec["date"] = _psy_date(rec.get("date"))
-    lists = desk.setdefault("lists", {})
-    hist = [x for x in (lists.get("psycho_history") or [])
-            if _psy_date(x.get("date")) != rec["date"]]
-    hist.append(rec)
-    hist.sort(key=lambda x: _psy_date(x.get("date")))
-    lists["psycho_history"] = hist
-    lists["psycho_latest"] = rec
-    save_ibd_desk(desk)
-    return hist
-
-
-def delete_psycho_row(desk, dt):
-    dt = _psy_date(dt)
-    lists = desk.setdefault("lists", {})
-    hist = [x for x in (lists.get("psycho_history") or [])
-            if _psy_date(x.get("date")) != dt]
-    lists["psycho_history"] = hist
-    lists["psycho_latest"] = hist[-1] if hist else {}
-    save_ibd_desk(desk)
-    return hist
-
-
 def _yf_close_pct(tickers):
     out = {}
     try:
@@ -443,89 +418,6 @@ def render_market_psycho(ctx=None):
             "- **C층** ICE BofA HY OAS는 하루 1회 종가, FRED는 다음날 오전 게시. 당일 방아쇠가 아니다.\n"
             "- 보수 규칙: **A층이 2개 이상 악화**하거나, A가 조용해도 **분산 5 + B/C 안일**이면 신규 0."
         )
-
-    st.markdown("**B층 수동 입력** · 같은 날짜 덮어씀. A층은 자동.")
-    try:
-        default_dt = pd.Timestamp(latest.get("date") or "2026-09-08").date()
-    except Exception:
-        default_dt = pd.Timestamp("2026-09-08").date()
-    with st.form("psycho_edit_v18"):
-        r1 = st.columns(3)
-        in_date = r1[0].date_input("날짜", value=default_dt)
-        in_src = r1[1].text_input("원전", value=str(latest.get("source") or "IBD 인쇄 수동"))
-        in_note = r1[2].text_input("메모", value=str(latest.get("note") or ""))
-        r2 = st.columns(4)
-        in_vix = r2[0].text_input("VIX 인쇄", value="" if latest.get("vix") is None else str(latest.get("vix")))
-        in_pc = r2[1].text_input("P/C 인쇄", value="" if latest.get("put_call") is None else str(latest.get("put_call")))
-        in_oas = r2[2].text_input("HY OAS %", value="" if book_oas is None else str(book_oas))
-        in_hl = r2[3].text_input("High-Low 인쇄", value="" if latest.get("high_low") is None else str(latest.get("high_low")))
-        r3 = st.columns(3)
-        in_bulls = r3[0].text_input("Bulls %", value="" if latest.get("bulls") is None else str(latest.get("bulls")))
-        in_bears = r3[1].text_input("Bears %", value="" if latest.get("bears") is None else str(latest.get("bears")))
-        in_mgn = r3[2].text_input("Margin YoY %", value="" if latest.get("margin_yoy") is None else str(latest.get("margin_yoy")))
-        saved = st.form_submit_button("이 날짜로 저장")
-    if saved:
-        rec = {
-            "date": _psy_date(in_date),
-            "vix": _psy_f(in_vix),
-            "put_call": _psy_f(in_pc),
-            "hy_oas": _psy_f(in_oas),
-            "high_low": _psy_f(in_hl),
-            "bulls": _psy_f(in_bulls),
-            "bears": _psy_f(in_bears),
-            "margin_yoy": _psy_f(in_mgn),
-            "source": (in_src or "IBD 인쇄 수동").strip(),
-            "note": (in_note or "").strip(),
-        }
-        try:
-            hist = save_psycho_row(desk, rec)
-            st.success("%s 저장 · 누적 %s일" % (rec["date"], len(hist)))
-            st.rerun()
-        except Exception as e:
-            st.error("저장 실패: " + str(e))
-
-    if hist:
-        ddel = st.columns([3, 1])
-        pick = ddel[0].selectbox(
-            "지울 날짜",
-            options=[_psy_date(x.get("date")) for x in hist],
-            index=len(hist) - 1,
-            key="psy_del_dt",
-        )
-        if ddel[1].button("이 날짜 삭제", key="psy_del_btn"):
-            try:
-                delete_psycho_row(desk, pick)
-                st.warning(pick + " 삭제")
-                st.rerun()
-            except Exception as e:
-                st.error("삭제 실패: " + str(e))
-
-    try:
-        import plotly.graph_objects as go
-        from plotly.subplots import make_subplots
-        xs = [_psy_date(r.get("date")) for r in hist]
-        fig = make_subplots(
-            rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.08,
-            subplot_titles=("B층 VIX인쇄 · P/C · H/L + C층 OAS",
-                            "Bulls vs Bears %", "Margin YoY %"),
-        )
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("vix") for r in hist], name="VIX print", mode="lines+markers"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("put_call") for r in hist], name="P/C print", mode="lines+markers"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("high_low") for r in hist], name="H/L", mode="lines+markers"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("hy_oas") for r in hist], name="HY OAS", mode="lines+markers"), row=1, col=1)
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("bulls") for r in hist], name="Bulls %", mode="lines+markers"), row=2, col=1)
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("bears") for r in hist], name="Bears %", mode="lines+markers"), row=2, col=1)
-        fig.add_trace(go.Scatter(x=xs, y=[r.get("margin_yoy") for r in hist], name="Margin YoY", mode="lines+markers"), row=3, col=1)
-        fig.add_hline(y=3.5, line_dash="dot", line_color="#c44", annotation_text="OAS 3.5", row=1, col=1)
-        fig.add_hline(y=55, line_dash="dot", line_color="#c44", annotation_text="55%", row=3, col=1)
-        fig.update_layout(height=620, margin=dict(t=48, b=24, l=40, r=20),
-                          legend=dict(orientation="h", y=1.08),
-                          title="B+C 추이 · %s일" % len(hist))
-        st.plotly_chart(fig, use_container_width=True)
-    except Exception:
-        st.caption("그래프 생략")
-    if hist:
-        st.dataframe(hist, hide_index=True, use_container_width=True)
 
     oas_txt = "—" if oas is None else str(oas)
     st.markdown(
