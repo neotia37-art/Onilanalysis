@@ -35,7 +35,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.25 · 회사개요 · 시장탭 정리")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.25 · Pulse 10/9 · AMT/CCI 10/9 · 시장탭 정리")',
         "v14.23 TABS list + caption (회사개요 탭 추가)",
     )
     old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
@@ -45,6 +45,10 @@ def _mutate(src: str) -> str:
         book24 = _fetch("ibd_book_v14_24.py")
     except Exception:
         book24 = ""
+    try:
+        book25 = _fetch("ibd_book_v14_25.py")
+    except Exception:
+        book25 = ""
     try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
@@ -57,7 +61,7 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
@@ -80,6 +84,8 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.24 company overview tab did not apply")
     if "CHECKUP_BOOK_V14_24" not in src:
         raise RuntimeError("v14.24 checkup/pulse seed did not apply")
+    if "CHECKUP_BOOK_V14_25" not in src:
+        raise RuntimeError("v14.25 AMT/CCI 10/9 checkup + Pulse 10/9 seed did not apply")
     if \'"  회사개요  "])\' not in src:
         raise RuntimeError("v14.24 회사개요 tab label missing from TABS (TABS[12] would IndexError)")'''
     if old_k not in src:
