@@ -1,4 +1,6 @@
-CANSLIM TERMINAL v14.25
+CANSLIM TERMINAL v14.27
+수록: Pulse 2026-10-12(월) MP10192026.jpg — 노출 80-100 · DD NAS2/SPX8 · 상승 ECO·FRO·DHT·HAFN·FIGS·TEN / 하락 LITE·SMTC. 액션: Stocks mixed as bank earnings loom.
+시드 patches/ibd_book_v14_27.py. 심리 인쇄는 10/9 유지(10/12 DailyPsycho 위젯 미수록).
 수록: Pulse 2026-10-09 노출 80-100 DD NAS2/SPX8 (MP10092026.jpg). 리더 상승 SNOW·GCT / 하락 CRGY·DE.
 수록: DailyPsycho 10/09 VIX 16.5 · P/C 0.82 · 불 56.9 / 베어 30.9.
 수록: AMT Checkup 2026-10-09 Comp70 RS68 SMR A A/D C / CCI Comp42 RS48 SMR D A/D C (REITs 85위 C+). 회사개요 AMT·CCI 추가.

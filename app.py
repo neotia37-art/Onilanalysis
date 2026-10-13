@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.26 wrapper — mutates v14.23 loader then execs."""
+"""CANSLIM TERMINAL v14.27 wrapper — mutates v14.23 loader then execs."""
 from __future__ import annotations
 
 import urllib.request
@@ -35,7 +35,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.26 · Pulse 10/12판(10/9 마감 기준) · 업트렌드 압력 · 노출 80-100 · DD 2/8")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.27 · Pulse 10/12(월) · 노출 80-100 · DD 2/8 · 리더 ECO/FRO··· / LITE/SMTC")',
         "v14.23 TABS list + caption (회사개요 탭 추가)",
     )
     old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
@@ -54,6 +54,10 @@ def _mutate(src: str) -> str:
     except Exception:
         book26 = ""
     try:
+        book27 = _fetch("ibd_book_v14_27.py")
+    except Exception:
+        book27 = ""
+    try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
         try:
@@ -65,7 +69,7 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
@@ -92,6 +96,8 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.25 AMT/CCI 10/9 checkup + Pulse 10/9 seed did not apply")
     if "CHECKUP_BOOK_V14_26" not in src:
         raise RuntimeError("v14.26 eIBD 10/12 cross-check seed did not apply")
+    if "CHECKUP_BOOK_V14_27" not in src:
+        raise RuntimeError("v14.27 Monday Pulse 10/12 seed did not apply")
     if \'"  회사개요  "])\' not in src:
         raise RuntimeError("v14.24 회사개요 tab label missing from TABS (TABS[12] would IndexError)")'''
     if old_k not in src:
