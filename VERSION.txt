@@ -1,6 +1,5 @@
 CANSLIM TERMINAL v14.28
-수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6 (MP10232026.jpg). 이전 10/12 80-100 고정 해제.
-시드 patches/ibd_book_v14_28.py.
-수록: Pulse 2026-10-12(월) MP10192026.jpg — 노출 80-100 · DD NAS2/SPX8.
-시드 patches/ibd_book_v14_27.py.
+수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6.
+추가: early seed helper (ensure_pulse_early) — 시장 탭 전 최신 Pulse 적용 도움.
+시드 patches/ibd_book_v14_28.py + patches/ibd_fixes_v14_28.py.
 2026-10-26 KST.
