@@ -1,5 +1,5 @@
 CANSLIM TERMINAL v14.28
 수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6.
-추가: early seed helper (ensure_pulse_early) — 시장 탭 전 최신 Pulse 적용 도움.
-시드 patches/ibd_book_v14_28.py + patches/ibd_fixes_v14_28.py.
+추가: early seed helper + apply_ibd_overlay 강제 호출 + sticky_bar 점수 출처 라벨(앱 Yahoo / IBD Checkup).
+시드 patches/ibd_book_v14_28.py + ibd_fixes_v14_28.py + ibd_overlay_labels_v14_28.py.
 2026-10-26 KST.
