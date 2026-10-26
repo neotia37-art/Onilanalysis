@@ -1,5 +1,5 @@
 # v14.28: earnings date warning + volume confirmation breakout flag
-# Fixed: pull due from full checkup record; compute volume ratio from df
+# Fixed: pull due from full checkup; compute volume ratio from df; show past earnings too
 
 _orig_sticky_bar3 = sticky_bar
 
@@ -27,7 +27,6 @@ def sticky_bar(ctx, D, extra=""):
                     due_str = chk.get("due") or chk.get("eps_due")
             except Exception:
                 pass
-        # fallbacks
         if not due_str and ctx.get("earnings_due"):
             due_str = ctx.get("earnings_due")
         if not due_str and isinstance(binfo, dict):
@@ -39,11 +38,13 @@ def sticky_bar(ctx, D, extra=""):
                 due_dt = datetime.strptime(str(due_str)[:10], "%Y-%m-%d")
                 days = (due_dt.date() - datetime.now().date()).days
                 if days < 0:
-                    pass  # already reported
+                    st.caption(f"실적일: {due_str} (이미 지남)")
                 elif days <= 3:
                     st.error(f"실적일 임박: {due_str} ({days}일 전) — 신규매수 금지")
                 elif days <= 14:
                     st.warning(f"실적일 주의: {due_str} ({days}일 전) — 신규매수 자제")
+                else:
+                    st.caption(f"다음 실적일: {due_str} ({days}일 후)")
             except Exception:
                 pass
     except Exception:
@@ -54,7 +55,6 @@ def sticky_bar(ctx, D, extra=""):
         pivot = float(binfo.get("pivot") or 0)
         price = float(price)
         if pivot and price >= pivot and df is not None and len(df) >= 50:
-            # Compute volume ratio: latest vs 50-day average
             vol_col = None
             for c in ("Volume", "volume", "vol"):
                 if c in df.columns:
@@ -72,7 +72,7 @@ def sticky_bar(ctx, D, extra=""):
                         else:
                             st.info(f"피봇 돌파 중 — 거래량 {ratio:.2f}× (1.4× 이상 필요)")
             else:
-                st.info("피봇 돌파 중 — 거래량 데이터 확인 필요")
+                st.info("피봇 돌파 중 — 거래량 컬럼 없음")
     except Exception:
         pass
 
