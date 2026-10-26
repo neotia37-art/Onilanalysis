@@ -61,6 +61,10 @@ def _mutate(src: str) -> str:
     except Exception:
         book28 = ""
     try:
+        fixes28 = _fetch("ibd_fixes_v14_28.py")
+    except Exception:
+        fixes28 = ""
+    try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
         try:
@@ -72,7 +76,7 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
