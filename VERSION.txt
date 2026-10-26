@@ -1,16 +1,6 @@
-CANSLIM TERMINAL v14.27
-수록: Pulse 2026-10-12(월) MP10192026.jpg — 노출 80-100 · DD NAS2/SPX8 · 상승 ECO·FRO·DHT·HAFN·FIGS·TEN / 하락 LITE·SMTC. 액션: Stocks mixed as bank earnings loom.
-시드 patches/ibd_book_v14_27.py. 심리 인쇄는 10/9 유지(10/12 DailyPsycho 위젯 미수록).
-수록: Pulse 2026-10-09 노출 80-100 DD NAS2/SPX8 (MP10092026.jpg). 리더 상승 SNOW·GCT / 하락 CRGY·DE.
-수록: DailyPsycho 10/09 VIX 16.5 · P/C 0.82 · 불 56.9 / 베어 30.9.
-수록: AMT Checkup 2026-10-09 Comp70 RS68 SMR A A/D C / CCI Comp42 RS48 SMR D A/D C (REITs 85위 C+). 회사개요 AMT·CCI 추가.
-수록: Your Weekly Review 10/9 (124종목).
-시드 patches/ibd_book_v14_25.py.
-정리: 시장탭 B층 수동 입력 폼(같은 날짜 덮어씀·날짜 삭제)·B+C 추이 그래프·이력 표 삭제. 저장 데이터는 유지.
-추가: 회사개요 탭(TABS[12]). CRWD·APH·MU·TSM·PANW·ANET·LITE·NVDA·PLTR·DELL·HPE·VLO 사업/매출/리스크 + IR·뉴스 링크.
-수록: Pulse 2026-09-28 노출 80-100 DD NAS3/SPX6 (MP09282026.jpg).
-수록: CRWD Checkup 2026-09-29 Comp99 RS99 SMR C A/D A+ vs50 +22.18 추격금지.
-수록: ANET 2026-09-28 Comp99 RS94 SMR A A/D C / NVDA 2026-09-28 Comp99 RS88.
-시드 patches/ibd_book_v14_24.py + patches/ibd_company_tab_v14_24.py.
-캐시 /tmp/canslim_v14_24_patched.py.
-2026-09-30 KST.
+CANSLIM TERMINAL v14.28
+수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6 (MP10232026.jpg). 이전 10/12 80-100 고정 해제.
+시드 patches/ibd_book_v14_28.py.
+수록: Pulse 2026-10-12(월) MP10192026.jpg — 노출 80-100 · DD NAS2/SPX8.
+시드 patches/ibd_book_v14_27.py.
+2026-10-26 KST.
