@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.27 wrapper — mutates v14.23 loader then execs."""
+"""CANSLIM TERMINAL v14.28 wrapper — mutates v14.23 loader then execs."""
 from __future__ import annotations
 
 import urllib.request
@@ -13,9 +13,8 @@ _CACHE = Path("/tmp/canslim_v14_24_loader.py")
 
 
 def _sub(src: str, old: str, new: str, what: str) -> str:
-    """str.replace 1회. 검색 문자열이 없으면 조용히 넘어가지 않고 즉시 실패."""
     if old not in src:
-        raise RuntimeError(f"v14.24 패치 대상 없음: {what}")
+        raise RuntimeError(f"v14.28 패치 대상 없음: {what}")
     return src.replace(old, new, 1)
 
 
@@ -23,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.24 — 회사개요 탭 + CRWD 9/29 + Pulse 9/28."""',
+        '"""CANSLIM TERMINAL v14.28 — Pulse 최신 20-40% + 회사개요."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -35,8 +34,8 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.27 · Pulse 10/12(월) · 노출 80-100 · DD 2/8 · 리더 ECO/FRO··· / LITE/SMTC")',
-        "v14.23 TABS list + caption (회사개요 탭 추가)",
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.28 · Pulse 최신 20-40% · DD NAS3/SPX6 · 회사개요")',
+        "v14.23 TABS list + caption",
     )
     old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
     drill = _fetch("ibd_ftd_drill_tab.py")'''
@@ -58,6 +57,10 @@ def _mutate(src: str) -> str:
     except Exception:
         book27 = ""
     try:
+        book28 = _fetch("ibd_book_v14_28.py")
+    except Exception:
+        book28 = ""
+    try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
         try:
@@ -69,10 +72,11 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
+    # company tab inject and checks preserved from prior
     old_t = '''    if "with TABS[11], guard(\\"FTD훈련\\")" not in src:
         src = src.rstrip() + "\\n\\n" + drill + "\\n"'''
     new_t = '''    if "with TABS[11], guard(\\"FTD훈련\\")" not in src:
@@ -98,13 +102,13 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.26 eIBD 10/12 cross-check seed did not apply")
     if "CHECKUP_BOOK_V14_27" not in src:
         raise RuntimeError("v14.27 Monday Pulse 10/12 seed did not apply")
+    if "CHECKUP_BOOK_V14_28" not in src:
+        raise RuntimeError("v14.28 Pulse 10/23 seed did not apply")
     if \'"  회사개요  "])\' not in src:
-        raise RuntimeError("v14.24 회사개요 tab label missing from TABS (TABS[12] would IndexError)")'''
+        raise RuntimeError("v14.24 회사개요 tab label missing from TABS")'''
     if old_k not in src:
         raise RuntimeError("v14.23 EPS check missing")
     src = src.replace(old_k, new_k, 1)
-    # v14.25: 시장탭 B층 수동 입력 폼(psycho_edit_v18)·B+C 추이 그래프 삭제
-    # → v14.23 로더의 폼 존재 검사를 3층 패널(C층) 존재 검사로 교체
     src = _sub(
         src,
         '''    if "psycho_edit_v21" not in src and "psycho_edit_v20" not in src and "psycho_edit_v18" not in src:
