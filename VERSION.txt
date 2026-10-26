@@ -1,5 +1,6 @@
 CANSLIM TERMINAL v14.28
 수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6.
-추가: early seed + overlay + 점수라벨 + 피봇표 + 매도/실적/거래량 + residual 정리(FEAR&GREED 라벨).
-시드: book28 + fixes28 + overlay28 + pivot28 + earnvol28 + cleanup28.
+추가: early seed + overlay + 점수라벨 + 피봇/매도/실적/거래량 + residual 정리 + DD 비교 헬퍼.
+중복 주입: ensure_book_seed 체인은 최신(v14.28)이 우선. 오래된 시드는 위핑만.
+시드: book28 + ... + dd28.
 2026-10-26 KST.
