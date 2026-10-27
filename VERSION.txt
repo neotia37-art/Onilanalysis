@@ -1,5 +1,5 @@
 CANSLIM TERMINAL v14.28
-수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6 (드라이브 마켓트렌드 10/24 확인).
-추가: recent top10 2026-10-23 (HALO HAS DOCU ADP RNR HURN NTAP VEEV P ESTC) 시드.
-기관동향/회사개요는 기존 프로필 + 최신 Pulse 연동.
-2026-10-26 KST.
+수록: Pulse 2026-10-23 노출 20-40% · DD NAS3/SPX6.
+UI: 회사개요 기본(업종/그룹순위) 우선 표시 · 기관동향 일자별 그래프 스텁 · Checkup 수동입력 노트.
+기관동향은 최신 시드 기반.
+2026-10-27 KST.
