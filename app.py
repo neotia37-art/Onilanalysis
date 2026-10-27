@@ -37,6 +37,22 @@ def _mutate(src: str) -> str:
         '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.28 · Pulse 최신 20-40% · DD NAS3/SPX6 · 회사개요")',
         "v14.23 TABS list + caption",
     )
+    # Completely suppress Checkup manual form injection
+    src = src.replace(
+        '    ck_u = _fetch("ibd_checkup_ui.py")',
+        '    ck_u = ""  # v14.28: Checkup form hidden',
+        1,
+    )
+    src = src.replace(
+        '            src = src[:i0] + ck_u.rstrip() + "\\n\\n" + src[i1:]',
+        '            pass  # v14.28: Checkup form suppressed',
+        1,
+    )
+    src = src.replace(
+        '        src = src.replace(a_65b, ck_u + "\\n" + a_65b, 1)',
+        '        pass  # v14.28: Checkup form suppressed',
+        1,
+    )
     old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
     drill = _fetch("ibd_ftd_drill_tab.py")'''
     new_f = '''    book10 = _fetch("ibd_book_v14_10.py")
