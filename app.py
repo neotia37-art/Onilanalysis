@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.28 wrapper — mutates v14.23 loader then execs."""
+"""CANSLIM TERMINAL v14.29 wrapper — mutates v14.23 loader then execs."""
 from __future__ import annotations
 
 import urllib.request
@@ -14,7 +14,7 @@ _CACHE = Path("/tmp/canslim_v14_24_loader.py")
 
 def _sub(src: str, old: str, new: str, what: str) -> str:
     if old not in src:
-        raise RuntimeError(f"v14.28 패치 대상 없음: {what}")
+        raise RuntimeError(f"v14.29 패치 대상 없음: {what}")
     return src.replace(old, new, 1)
 
 
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.28 — Pulse 최신 20-40% + 회사개요."""',
+        '"""CANSLIM TERMINAL v14.29 — Pulse JSON + 기관 그래프."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.28 · Pulse 최신 20-40% · DD NAS3/SPX6 · 회사개요")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.29 · Pulse JSON 10/23 · DD NAS3/SPX6 · 기관그래프")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -109,6 +109,10 @@ def _mutate(src: str) -> str:
     except Exception:
         uiclean28 = ""
     try:
+        pulsejson29 = _fetch("ibd_pulse_json_v14_29.py")
+    except Exception:
+        pulsejson29 = ""
+    try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
         try:
@@ -120,7 +124,7 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot28 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot28 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + pulsejson29 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
