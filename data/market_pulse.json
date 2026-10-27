@@ -1,0 +1,45 @@
+{
+  "latest": {
+    "date": "2026-10-23",
+    "headline": "Stocks fall as oil bubbles higher",
+    "exposure": "20%-40%",
+    "dist_nasdaq": 3,
+    "dist_spx": 6,
+    "leaders_up": ["RNG", "EQNR"],
+    "leaders_down": ["NHC", "CAKE"],
+    "source": "MP10232026.jpg",
+    "note": "노출 20-40% 유지 · DD NAS3/SPX6. 드라이브 마켓트렌드 10/24 확인."
+  },
+  "history": [
+    {
+      "date": "2026-10-23",
+      "headline": "Stocks fall as oil bubbles higher",
+      "exposure": "20%-40%",
+      "dist_nasdaq": 3,
+      "dist_spx": 6,
+      "leaders_up": ["RNG", "EQNR"],
+      "leaders_down": ["NHC", "CAKE"],
+      "source": "MP10232026.jpg"
+    },
+    {
+      "date": "2026-10-22",
+      "headline": "Nasdaq drops as yields plummet",
+      "exposure": "20%-40%",
+      "dist_nasdaq": 3,
+      "dist_spx": 6,
+      "leaders_up": ["AMN", "APPN", "QLYS", "FTDR", "NHC", "HURN", "HAS"],
+      "leaders_down": ["MRNA", "XP", "MRK", "DT", "ATEYY", "BFH", "MSM", "TRGP", "ASX"],
+      "source": "MP102226.jpg"
+    },
+    {
+      "date": "2026-10-12",
+      "headline": "Stocks mixed as bank earnings loom",
+      "exposure": "80%-100%",
+      "dist_nasdaq": 2,
+      "dist_spx": 8,
+      "leaders_up": ["ECO", "FRO", "DHT", "HAFN", "FIGS", "TEN"],
+      "leaders_down": ["LITE", "SMTC"],
+      "source": "MP10192026.jpg"
+    }
+  ]
+}
