@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.29 wrapper — mutates v14.23 loader then execs."""
+"""CANSLIM TERMINAL v14.30 wrapper — mutates v14.23 loader then execs."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,12 +9,12 @@ _V23 = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "e5807af6c4ce06eba7b8ee1a59fa72c9b42b4458/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_24_loader.py")
+_CACHE = Path("/tmp/canslim_v14_30_loader.py")
 
 
 def _sub(src: str, old: str, new: str, what: str) -> str:
     if old not in src:
-        raise RuntimeError(f"v14.29 패치 대상 없음: {what}")
+        raise RuntimeError(f"v14.30 패치 대상 없음: {what}")
     return src.replace(old, new, 1)
 
 
@@ -22,19 +22,19 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.29 — Pulse JSON + 기관 그래프."""',
+        '"""CANSLIM TERMINAL v14.30 — 상대 밸류에이션 탭."""',
         "v14.23 docstring",
     )
     src = _sub(
         src,
         'Path("/tmp/canslim_v14_23_patched.py")',
-        'Path("/tmp/canslim_v14_24_patched.py")',
+        'Path("/tmp/canslim_v14_30_patched.py")',
         "v14.23 cache path",
     )
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  "])\nst.caption("CANSLIM TERMINAL v14.29 · Pulse JSON 10/23 · DD NAS3/SPX6 · 기관그래프")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.30 · 상대 밸류에이션 자동 업데이트")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -119,6 +119,10 @@ def _mutate(src: str) -> str:
             company = _fetch("ibd_company_tab_v14_24.py")
         except Exception:
             company = ""
+    try:
+        relval = _fetch("ibd_relval_tab_v14_30.py")
+    except Exception:
+        relval = ""
     drill = _fetch("ibd_ftd_drill_tab.py")'''
     if old_f not in src:
         raise RuntimeError("v14.23 book10 fetch block missing")
@@ -128,7 +132,7 @@ def _mutate(src: str) -> str:
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
-    # company tab inject and checks preserved from prior
+    # company tab inject and checks preserved from prior + relval
     old_t = '''    if "with TABS[11], guard(\\"FTD훈련\\")" not in src:
         src = src.rstrip() + "\\n\\n" + drill + "\\n"'''
     new_t = '''    if "with TABS[11], guard(\\"FTD훈련\\")" not in src:
@@ -136,7 +140,11 @@ def _mutate(src: str) -> str:
     if "with TABS[12], guard(\\"회사개요\\")" not in src:
         if not company or "COMPANY_TAB_V14_24" not in company:
             raise RuntimeError("v14.24 company overview tab patch missing")
-        src = src.rstrip() + "\\n\\n" + company + "\\n"'''
+        src = src.rstrip() + "\\n\\n" + company + "\\n"
+    if "with TABS[13], guard(\\"상대밸류\\")" not in src:
+        if not relval or "RELVAL_TAB_V14_30" not in relval:
+            raise RuntimeError("v14.30 relative valuation tab patch missing")
+        src = src.rstrip() + "\\n\\n" + relval + "\\n"'''
     if old_t not in src:
         raise RuntimeError("v14.23 FTD tab inject missing")
     src = src.replace(old_t, new_t, 1)
@@ -157,7 +165,9 @@ def _mutate(src: str) -> str:
     if "CHECKUP_BOOK_V14_28" not in src:
         raise RuntimeError("v14.28 Pulse 10/23 seed did not apply")
     if \'"  회사개요  "])\' not in src:
-        raise RuntimeError("v14.24 회사개요 tab label missing from TABS")'''
+        raise RuntimeError("v14.24 회사개요 tab label missing from TABS")
+    if "RELVAL_TAB_V14_30" not in src or "def render_relval_tab" not in src:
+        raise RuntimeError("v14.30 relative valuation tab did not apply")'''
     if old_k not in src:
         raise RuntimeError("v14.23 EPS check missing")
     src = src.replace(old_k, new_k, 1)
