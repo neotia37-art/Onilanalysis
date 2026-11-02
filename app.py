@@ -164,8 +164,10 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.27 Monday Pulse 10/12 seed did not apply")
     if "CHECKUP_BOOK_V14_28" not in src:
         raise RuntimeError("v14.28 Pulse 10/23 seed did not apply")
-    if \'"  회사개요  "])\' not in src:
+    if "  회사개요  " not in src:
         raise RuntimeError("v14.24 회사개요 tab label missing from TABS")
+    if "  상대밸류  " not in src:
+        raise RuntimeError("v14.30 상대밸류 tab label missing from TABS")
     if "RELVAL_TAB_V14_30" not in src or "def render_relval_tab" not in src:
         raise RuntimeError("v14.30 relative valuation tab did not apply")'''
     if old_k not in src:
