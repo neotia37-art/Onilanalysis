@@ -6,7 +6,7 @@ from html import escape
 
 import streamlit as st
 
-from selfdesk.inst import load_us, fetch_kr, resolve_kind
+from selfdesk.inst import load_us, fetch_kr, resolve_kind, ownership_band, explain_filed_gap
 
 
 @st.cache_data(ttl=1800, show_spinner=False)
@@ -94,27 +94,39 @@ def render_self_inst() -> None:
             if kind == "KR":
                 _render_kr(code, card, table, step_header, read_box, tag)
             else:
-                _render_us(code, card, table, step_header, read_box, tag)
+                _render_us(code, card, table, step_header, read_box, tag, _stock_inst_pct(ui))
     except Exception as exc:
         st.warning(f"{symbol} 기관 자료를 받지 못했습니다: {exc}")
 
 
-def _render_us(symbol, card, table, step_header, read_box, tag) -> None:
+def _stock_inst_pct(ui) -> float | None:
+    """The individual-stock card reads CTX fnd.inst. Use that exact figure."""
+    ctx = (ui or {}).get("CTX") or {}
+    fnd = ctx.get("fnd") or {}
+    value = fnd.get("inst")
+    try:
+        if value is None or value != value:
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _render_us(symbol, card, table, step_header, read_box, tag, shown_pct=None) -> None:
     snap = _load_us(symbol)
     judge = snap["judge"]
     yahoo = snap.get("yahoo") or {}
+    shown = shown_pct if shown_pct is not None else yahoo.get("own_pct")
+    filed = snap.get("own_pct")
     net = None
     if snap.get("new") is not None and snap.get("sold") is not None:
         net = snap["new"] - snap["sold"]
-    tone = "up" if judge["stance"].endswith("확대") else ("down" if judge["stance"].endswith("축소") else "mut")
-    own_note = "Nasdaq 13F"
-    if snap.get("own_pct") is not None and snap["own_pct"] > 100:
-        own_note = "100% 넘으면 비율보다 수를 본다"
+    own_tone = "up" if shown is not None and 15 <= shown <= 90 else "mut"
     specs = [
-        ("기관 보유율", _pct(snap.get("own_pct")), own_note, "mut" if (snap.get("own_pct") or 0) > 100 else tone),
-        ("보고 기관", f"{snap['holders']:,}" if snap.get("holders") is not None else "—", "이번 분기 집계", ""),
-        ("신규 − 청산", _signed(net), f"신규 {snap.get('new') if snap.get('new') is not None else '—'} · 청산 {snap.get('sold') if snap.get('sold') is not None else '—'}", tone),
-        ("확대 / 축소", f"{snap.get('increased') if snap.get('increased') is not None else '—'} / {snap.get('decreased') if snap.get('decreased') is not None else '—'}", "지분을 늘린 곳 / 줄인 곳", tone),
+        ("기관 보유 비중", _pct(shown, 1), ownership_band(shown), own_tone),
+        ("보고 기관", f"{snap['holders']:,}" if snap.get("holders") is not None else "—", "이번 분기 13F 건수", ""),
+        ("신규 − 청산", _signed(net), f"신규 {snap.get('new') if snap.get('new') is not None else '—'} · 청산 {snap.get('sold') if snap.get('sold') is not None else '—'}", ""),
+        ("확대 / 축소", f"{snap.get('increased') if snap.get('increased') is not None else '—'} / {snap.get('decreased') if snap.get('decreased') is not None else '—'}", "지분을 늘린 곳 / 줄인 곳", ""),
     ]
     if card:
         cols = st.columns(4)
@@ -129,8 +141,7 @@ def _render_us(symbol, card, table, step_header, read_box, tag) -> None:
         st.subheader(judge["stance"])
         for line in judge["notes"]:
             st.caption(line)
-    if yahoo.get("own_pct") is not None and snap.get("own_pct") is not None and abs(yahoo["own_pct"] - snap["own_pct"]) >= 5:
-        st.caption(f"보유율은 출처가 다릅니다. Nasdaq {_pct(snap['own_pct'])}, Yahoo {_pct(yahoo['own_pct'])}.")
+    st.caption(explain_filed_gap(shown, filed))
     if step_header:
         step_header("13F", "보유 상위", "지수 운용과 그 밖을 가른다. 상위만이고 전체가 아니다.")
     st.caption("Vanguard · BlackRock · State Street · Geode · Northern Trust · Schwab 은 지수 운용으로 봅니다.")

@@ -287,6 +287,33 @@ def judge_kr(recent_inst: int | None, prior_inst: int | None, recent_foreign: in
     return {"stance": stance, "notes": notes}
 
 
+def ownership_band(pct: float | None) -> str:
+    """Same band as the stock tab card: 15–90% is the only '적정'."""
+    if pct is None:
+        return "개별종목과 같은 출처를 받지 못함"
+    if 15 <= pct <= 90:
+        return "15~90% 적정"
+    if pct > 90:
+        return "90% 초과 · 과밀"
+    return "15% 미만 · 아직 얇음"
+
+
+def explain_filed_gap(shown: float | None, filed: float | None) -> str:
+    """13F totals double-count a fund and its adviser. Do not use that sum as ownership."""
+    if shown is None:
+        return (
+            "보유 비중은 개별종목 탭과 같은 값만 쓴다. "
+            "13F 신고를 더한 비율은 펀드와 운용사가 겹쳐 더 크게 나오므로, 그 숫자로 보유 비중을 채우지 않는다."
+        )
+    if filed is None or abs(filed - shown) < 1:
+        return "기관 보유 비중은 개별종목 탭과 같은 값이다."
+    return (
+        f"기관 보유 비중 {shown:.1f}%는 개별종목 탭과 같은 값이다. "
+        f"13F 신고 주식을 모두 더하면 {filed:.1f}%가 되지만, 펀드와 그 운용사가 같은 주식을 각각 적어 실제보다 크다. "
+        "보유 비중은 그 합을 쓰지 않고, 아래 숫자는 이번 분기 기관 수의 변화만 본다."
+    )
+
+
 def fetch_nasdaq(symbol: str) -> dict:
     url = (
         "https://api.nasdaq.com/api/company/"
