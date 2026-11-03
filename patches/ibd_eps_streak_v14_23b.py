@@ -40,11 +40,13 @@ def render_eps_streak(fnd, market=None):
                        "C 기준 +25%",
                        "up" if _es_ok(S["last_q"], 25) else "down"),
                   unsafe_allow_html=True)
-    acc_lab = "가속" if S["accel"] else ("둔화" if S["accel"] is False else "—")
+    acc_lab = S.get("accel_label") or (
+        "가속" if S["accel"] else ("둔화" if S["accel"] is False else "—"))
+    acc_tone = "up" if acc_lab == "가속" else ("down" if acc_lab == "둔화" else "mut")
     c[3].markdown(card("분기 추세",
                        acc_lab,
-                       "창 첫 분기 대비 최근",
-                       "up" if S["accel"] else ("mut" if S["accel"] is None else "down")),
+                       "직전 분기 대비 · 최근 3스텝",
+                       acc_tone),
                   unsafe_allow_html=True)
 
     def _rows(items, year=False):
@@ -78,10 +80,21 @@ def render_eps_streak(fnd, market=None):
             st.markdown(table(["분기", "EPS", "전년동기", "증가율", "비교", "출처"], qr),
                         unsafe_allow_html=True)
             seq = " → ".join(_es_fmt_g(r.get("growth")) for r in S["q_rows"])
-            extra = tag("가속", "pass") if S["accel"] else (
-                tag("둔화", "warn") if S["accel"] is False else "")
+            if acc_lab == "가속":
+                extra = tag("가속", "pass")
+            elif acc_lab == "둔화":
+                extra = tag("둔화", "warn")
+            elif acc_lab == "정체":
+                extra = tag("정체", "idle")
+            else:
+                extra = ""
             st.markdown(f'<div class="ev">6분기 EPS 증가율 추이 <b>{seq}</b> {extra}</div>',
                         unsafe_allow_html=True)
+            st.markdown(
+                '<div class="hint">가속은 창의 첫 분기와 끝을 비교하지 않는다. '
+                '최근 증가율이 직전 분기보다 높고, 최근 3스텝 중 상승이 하락보다 많을 때만 가속이다. '
+                '한 번 크게 무너진 뒤의 덜 나쁜 숫자는 가속이 아니다.</div>',
+                unsafe_allow_html=True)
             if S["q_n"] < 6:
                 st.markdown(
                     f'<div class="hint">지금은 <b>{S["q_n"]}분기</b>만 확보. '

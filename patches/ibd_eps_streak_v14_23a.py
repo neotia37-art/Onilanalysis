@@ -1,4 +1,4 @@
-# v14.23 — 개별종목 최근 3년 · 6분기 EPS 증가율 + 최우선 뱃지
+# v14.34 — 가속은 창의 첫 값과 끝이 아니라 최근 분기의 기울기.
 # 오닐 C(분기 전년동기) · A(연간 연속). 손익계산서 열이 짧으면 실적발표 EPS로 보충.
 EPS_STREAK_V14_23 = True
 
@@ -164,6 +164,60 @@ def _es_ok(g, bar=25):
     return g == 999 or g >= bar
 
 
+def _es_step(prev, cur):
+    """한 스텝. 1 상승, -1 하락, 0 보합. 999는 흑자전환이라 어떤 유한 증가율보다 위."""
+    if prev is None or cur is None:
+        return None
+    try:
+        p_turn = float(prev) == 999
+        c_turn = float(cur) == 999
+        p = float(prev)
+        c = float(cur)
+    except Exception:
+        return None
+    if p_turn and c_turn:
+        return 0
+    if c_turn and not p_turn:
+        return 1
+    if p_turn and not c_turn:
+        return -1
+    if c > p:
+        return 1
+    if c < p:
+        return -1
+    return 0
+
+
+def _es_accel(q_g):
+    """6분기 증가율의 가속.
+
+    오닐의 가속은 최근 전년동기 증가율이 바로 앞 분기보다 높아지는 것이다.
+    창의 첫 분기와 끝만 비교하면 -320% 다음의 -39%도 가속이 된다. 그건 아니다.
+    가속: 최근 스텝이 상승이고, 최근 최대 3스텝 중 상승이 하락보다 많다.
+    둔화: 최근 스텝이 하락이거나, 최근 3스텝이 하락 우세.
+    정체: 최근 증가율이 직전과 같고 하락 우세가 아님.
+    """
+    pts = [g for g in (q_g or []) if g is not None]
+    if len(pts) < 2:
+        return None, "—"
+    steps = []
+    for i in range(1, len(pts)):
+        s = _es_step(pts[i - 1], pts[i])
+        if s is not None:
+            steps.append(s)
+    if not steps:
+        return None, "—"
+    recent = steps[-3:]
+    ups = sum(1 for s in recent if s > 0)
+    downs = sum(1 for s in recent if s < 0)
+    last = steps[-1]
+    if last > 0 and ups > downs:
+        return True, "가속"
+    if last < 0 or downs > ups:
+        return False, "둔화"
+    return None, "정체"
+
+
 def eps_streak_from_fnd(fnd):
     fnd = fnd or {}
     y_rows = _es_from_tab(fnd.get("y_tab"), lag=1, last=3, is_year=True)
@@ -206,15 +260,7 @@ def eps_streak_from_fnd(fnd):
     q_pos = sum(1 for g in q_g if g == 999 or (g is not None and float(g) > 0))
     last_q = q_g[-1] if q_g else None
     last_y = y_g[-1] if y_g else None
-    accel = None
-    if len(q_g) >= 2:
-        a, b = q_g[0], q_g[-1]
-        if a != 999 and b != 999:
-            accel = b > a
-        elif b == 999 and a != 999:
-            accel = True
-        else:
-            accel = False
+    accel, accel_label = _es_accel(q_g)
     y_streak = (y_n >= 3 and y_ge25 == y_n)
     q_streak = (q_n >= 4 and q_ge25 == q_n and _es_ok(last_q, 25))
     priority = bool(y_streak and q_streak)
@@ -229,7 +275,8 @@ def eps_streak_from_fnd(fnd):
         "y_rows": y_rows, "q_rows": q_rows, "y_g": y_g, "q_g": q_g,
         "y_n": y_n, "q_n": q_n, "y_ge25": y_ge25, "q_ge25": q_ge25,
         "y_pos": y_pos, "q_pos": q_pos, "last_q": last_q, "last_y": last_y,
-        "accel": accel, "y_streak": y_streak, "q_streak": q_streak,
+        "accel": accel, "accel_label": accel_label,
+        "y_streak": y_streak, "q_streak": q_streak,
         "priority": priority,
         "note": " · ".join(strong_note) if strong_note else "연속 +25% 미달",
     }

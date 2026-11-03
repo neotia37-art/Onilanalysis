@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.33 wrapper — keeps every tab, adds self DD on the market tab."""
+"""CANSLIM TERMINAL v14.34 wrapper — keeps every tab. EPS accel uses the recent slope."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.33 — 기존 탭 유지 + 시장 탭 자체 분산일."""',
+        '"""CANSLIM TERMINAL v14.34 — 기존 탭 유지 + EPS 가속은 최근 기울기."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.33 · 기존 탭 유지 · 시장 탭 자체 분산일·점수 상한")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.34 · EPS 가속은 최근 3스텝 · 시장 탭 자체 분산일")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
