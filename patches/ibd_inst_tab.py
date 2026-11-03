@@ -1,6 +1,11 @@
 # TAB 10 — 기관동향
 to_top()
 with TABS[10], guard("기관동향"):
+    try:
+        from selfdesk.inst_panel import render_self_inst
+        render_self_inst()
+    except Exception as _sie:
+        st.warning("자체 기관: " + str(_sie))
     st.markdown('<div class="masthead"><h1>기관투자동향 (I)</h1><div class="sub">'
                 "Daily Mutual 스냅샷 · 36개월 펀드 · Checkup 추이 · 수동 누적</div></div>",
                 unsafe_allow_html=True)
