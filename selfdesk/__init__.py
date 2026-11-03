@@ -1,0 +1,1 @@
+"""Self-computed market desk."""
