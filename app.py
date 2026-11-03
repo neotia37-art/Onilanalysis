@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.30 wrapper — mutates v14.23 loader then execs."""
+"""CANSLIM TERMINAL v14.31 wrapper — mutates v14.23 loader then execs."""
 from __future__ import annotations
 
 import urllib.request
@@ -9,12 +9,12 @@ _V23 = (
     "https://raw.githubusercontent.com/neotia37-art/Onilanalysis/"
     "e5807af6c4ce06eba7b8ee1a59fa72c9b42b4458/app.py"
 )
-_CACHE = Path("/tmp/canslim_v14_30_loader.py")
+_CACHE = Path("/tmp/canslim_v14_31_loader.py")
 
 
 def _sub(src: str, old: str, new: str, what: str) -> str:
     if old not in src:
-        raise RuntimeError(f"v14.30 패치 대상 없음: {what}")
+        raise RuntimeError(f"v14.31 패치 대상 없음: {what}")
     return src.replace(old, new, 1)
 
 
@@ -22,19 +22,19 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.30 — 상대 밸류에이션 탭."""',
+        '"""CANSLIM TERMINAL v14.31 — 우선순위 개선 (next earnings, RS, date, pivot, DD)."""',
         "v14.23 docstring",
     )
     src = _sub(
         src,
         'Path("/tmp/canslim_v14_23_patched.py")',
-        'Path("/tmp/canslim_v14_30_patched.py")',
+        'Path("/tmp/canslim_v14_31_patched.py")',
         "v14.23 cache path",
     )
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.30 · 상대 밸류에이션 자동 업데이트")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.31 · 다음 예정 실적 · RS 근사 · 기준일 · 피봇 필터 · DD 정합")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -113,6 +113,10 @@ def _mutate(src: str) -> str:
     except Exception:
         pulsejson29 = ""
     try:
+        prio31 = _fetch("ibd_priority_fixes_v14_31.py")
+    except Exception:
+        prio31 = ""
+    try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
         try:
@@ -128,7 +132,7 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot29 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + pulsejson29 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot29 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + pulsejson29 + "\\n\\n" + prio31 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
