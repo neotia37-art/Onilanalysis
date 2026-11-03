@@ -24,22 +24,19 @@ _INDEXER = (
 _US = re.compile(r"[A-Z][A-Z0-9.\-]{0,9}")
 
 
-def split_query(raw: str) -> tuple[str, str]:
-    s = (raw or "").strip().upper().replace(" ", "")
-    if not s:
-        raise ValueError("티커가 비었습니다.")
-    if s.endswith(".KS") or s.endswith(".KQ"):
-        code = s[:-3]
-        if code.isdigit() and len(code) == 6:
-            return "KR", code
-        raise ValueError("한국 코드는 6자리입니다.")
-    if s.isdigit():
-        if len(s) == 6:
-            return "KR", s
-        raise ValueError("숫자 티커는 한국 6자리만 받습니다.")
-    if not _US.fullmatch(s):
+def resolve_kind(symbol: str, market: str = "") -> tuple[str, str]:
+    """Sidebar market wins. Korean codes stay 6 digits; US tickers stay as typed."""
+    raw = (symbol or "").strip().upper().replace(" ", "")
+    if not raw:
+        raise ValueError("사이드바에서 종목을 조회하면 기관동향이 열립니다.")
+    if (market or "").upper() == "KR" or raw.endswith(".KS") or raw.endswith(".KQ") or (raw.isdigit() and len(raw) == 6):
+        code = raw[:-3] if raw.endswith(".KS") or raw.endswith(".KQ") else raw
+        if not (code.isdigit() and len(code) == 6):
+            raise ValueError("한국 종목코드 6자리가 아닙니다.")
+        return "KR", code
+    if not _US.fullmatch(raw):
         raise ValueError("티커 형식이 아닙니다.")
-    return "US", s
+    return "US", raw
 
 
 def parse_int(value) -> int | None:

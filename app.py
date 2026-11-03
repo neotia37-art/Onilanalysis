@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.35 wrapper — keeps every tab. Institutional tab reads 13F, not only IBD."""
+"""CANSLIM TERMINAL v14.36 wrapper — institutional tab follows the sidebar ticker."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.35 — 기존 탭 유지 + 기관동향은 13F·거래원."""',
+        '"""CANSLIM TERMINAL v14.36 — 기관동향은 사이드바 종목과 연동."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.35 · 기관동향은 13F·거래원 · EPS 가속은 최근 3스텝")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.36 · 기관동향은 사이드바 종목 · IBD 입력 없음")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
