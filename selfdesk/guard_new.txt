@@ -1,0 +1,16 @@
+@contextlib.contextmanager
+def guard(section):
+    """한 구역에서 예외가 나도 화면 전체가 죽지 않도록 막는다. 맨 위에 자료 기준일을 적는다."""
+    try:
+        from selfdesk.asof import show_tab_asof
+        show_tab_asof(section)
+    except Exception as _ae:
+        st.caption("자료 기준일: " + str(_ae)[:180])
+    try:
+        yield
+    except Exception as e:
+        st.error(f"**{section}** 구역에서 오류가 발생했습니다. "
+                 f"다른 탭은 정상 동작합니다.")
+        st.caption(f"{type(e).__name__}: {str(e)[:300]}")
+        with st.expander("자세한 내용 (개발용)"):
+            st.code("".join(traceback.format_exc())[-3000:])

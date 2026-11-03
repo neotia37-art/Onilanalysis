@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.37 wrapper — institutional ownership matches the stock tab."""
+"""CANSLIM TERMINAL v14.38 wrapper — as-of dates on every tab, sector ranks on the market tab."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.37 — 기관 보유 비중은 개별종목 탭과 같은 값."""',
+        '"""CANSLIM TERMINAL v14.38 — 자료 기준일 · 섹터 순위."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.37 · 기관 보유 비중은 개별종목과 동일")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.38 · 각 탭 자료 기준일 · 시장 탭 섹터 순위")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -193,8 +193,26 @@ def _mutate(src: str) -> str:
         "    '    except Exception as _sem:\\n'\n"
         "    '        st.warning(\"자체 분산일: \" + str(_sem))\\n'\n"
         "    '    try:\\n'\n"
+        "    '        from selfdesk.sector_panel import render_sector_ranks\\n'\n"
+        "    '        render_sector_ranks()\\n'\n"
+        "    '    except Exception as _sse:\\n'\n"
+        "    '        st.warning(\"섹터 순위: \" + str(_sse))\\n'\n"
+        "    '    try:\\n'\n"
         "    '        render_market_psycho(CTX)\\n'",
         "self market hook",
+    )
+    src = _sub(
+        src,
+        "    try:\n        compile(src, str(_CACHE), \"exec\")\n",
+        "    from pathlib import Path as _AsOfPath\n"
+        "    _asof_root = _AsOfPath(__file__).resolve().parent\n"
+        "    _guard_old = (_asof_root / \"selfdesk\" / \"guard_old.txt\").read_text(encoding=\"utf-8\")\n"
+        "    _guard_new = (_asof_root / \"selfdesk\" / \"guard_new.txt\").read_text(encoding=\"utf-8\")\n"
+        "    if _guard_old not in src:\n"
+        "        raise RuntimeError(\"v14.38 자료 기준일 패치 대상 없음\")\n"
+        "    src = src.replace(_guard_old, _guard_new, 1)\n"
+        "    try:\n        compile(src, str(_CACHE), \"exec\")\n",
+        "asof guard",
     )
     return src
 
