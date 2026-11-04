@@ -5,7 +5,7 @@ import inspect
 
 import streamlit as st
 
-from selfdesk.sectors import clear_sector_cache, load_sector_ranks
+from selfdesk.sector_lookup import clear_sector_cache, load_sector_ranks
 
 
 def _ui():

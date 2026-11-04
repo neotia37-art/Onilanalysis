@@ -1,6 +1,6 @@
 def load_sector_rank(market, sector=None):
     try:
-        from selfdesk.sectors import sector_for_stock
+        from selfdesk.sector_lookup import sector_for_stock
         return sector_for_stock(sector)
     except Exception:
         return None

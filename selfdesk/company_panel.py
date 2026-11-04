@@ -7,7 +7,6 @@ from html import escape
 import streamlit as st
 
 from selfdesk.profile import clear_profile_cache, fetch_profile
-from selfdesk.sectors import sector_for_stock
 
 
 def _ui():
@@ -97,6 +96,7 @@ def render_company() -> None:
     sector_name = fnd.get("sector") or prof.get("sector")
     sect = None
     try:
+        from selfdesk.sector_lookup import sector_for_stock
         sect = sector_for_stock(sector_name)
     except Exception:
         sect = None
