@@ -28,6 +28,16 @@ def _num(value, digits=1, suffix=""):
         return str(value)
 
 
+def _head(step_header, title, sub, note=""):
+    try:
+        if step_header:
+            step_header(title, sub, note)
+            return
+    except Exception:
+        pass
+    st.subheader(sub or title)
+
+
 def _pct(value):
     if value is None:
         return "—"
@@ -79,7 +89,9 @@ def render_company() -> None:
     st.caption(f"자료 기준 · 시세 {quote_at} · 회사 설명 조회 {fetched} · {prof.get('symbol') or tk}")
 
     if step_header:
-        step_header("사업", "무엇을 하는 회사인가", prof.get("industry") or "")
+        _head(step_header, "사업", "무엇을 하는 회사인가", prof.get("industry") or "")
+    else:
+        st.subheader("무엇을 하는 회사인가")
     summary = prof.get("summary") or "사업 설명을 받지 못했습니다."
     st.write(summary[:900])
     facts = [
@@ -115,8 +127,7 @@ def render_company() -> None:
     opm = fnd.get("opm") if fnd.get("opm") is not None else prof.get("operating_margin")
     debt = fnd.get("debt") if fnd.get("debt") is not None else prof.get("debt_to_equity")
 
-    if step_header:
-        step_header("장기", "C · A — 이 회사를 몇 년 들고 갈 이야기", "성장이 25%를 넘고 이익의 질이 남는지")
+    _head(step_header, "장기", "C · A — 이 회사를 몇 년 들고 갈 이야기", "성장이 25%를 넘고 이익의 질이 남는지")
     long_rows = [
         ("매출 성장", _pct(prof.get("revenue_growth")), "야후가 준 최근 매출 성장"),
         ("이익 성장", _pct(prof.get("earnings_growth")), "야후가 준 최근 이익 성장"),
@@ -148,8 +159,7 @@ def render_company() -> None:
     else:
         st.info(long_text)
 
-    if step_header:
-        step_header("단기", "N · S · L — 오늘 이 자리에서 쫓아도 되는가", "고점 이격, 이평선, 업종 순위")
+    _head(step_header, "단기", "N · S · L — 오늘 이 자리에서 쫓아도 되는가", "고점 이격, 이평선, 업종 순위")
     short_rows = [
         ("50일선", _pct(gap50) if gap50 is not None else "—", "위면 양수"),
         ("200일선", _pct(gap200) if gap200 is not None else "—", "아래면 방어"),

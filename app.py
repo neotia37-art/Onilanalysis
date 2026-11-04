@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.40 wrapper — company tab no longer dies on the sector import."""
+"""CANSLIM TERMINAL v14.41 wrapper — company tab no longer recurses through step_header."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.40 — 회사개요는 업종 순위를 못 받아도 연다."""',
+        '"""CANSLIM TERMINAL v14.41 — 회사개요 재귀 호출을 끊었다."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.40 · 회사개요는 조회 종목 · 업종 순위가 없어도 본문은 연다")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.41 · 회사개요 재귀 오류 수정")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection

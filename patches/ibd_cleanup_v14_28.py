@@ -7,12 +7,12 @@ def _suppress_residual_cards():
 # Ensure any fear/greed header is clearly marked as app-only if it still appears
 _orig_step_header = step_header if "step_header" in globals() else None
 
-def step_header(title, sub="", note=""):
-    if _orig_step_header:
+def step_header(title, sub="", note="", _orig=_orig_step_header):
+    if _orig:
         if "FEAR & GREED" in str(title) or "포공탐욕" in str(title):
             title = "FEAR & GREED (앱 자체 근사)"
             sub = "3층 판정과 별개 · CNN식 근사"
-        return _orig_step_header(title, sub, note)
+        return _orig(title, sub, note)
     return None
 
 print("v14.28 cleanup: residual card labels adjusted")
