@@ -13,7 +13,7 @@ def fetch_daily(symbol: str, range_: str = "1y") -> list[dict]:
         f"{urlquote(symbol, safe='')}?range={range_}&interval=1d&includeAdjustedClose=true"
     )
     req = Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
-    with urlopen(req, timeout=30) as res:
+    with urlopen(req, timeout=12) as res:
         body = json.loads(res.read().decode("utf-8"))
     result = (body.get("chart") or {}).get("result") or [None]
     result = result[0]

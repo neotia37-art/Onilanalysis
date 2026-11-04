@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.38 wrapper — as-of dates on every tab, sector ranks on the market tab."""
+"""CANSLIM TERMINAL v14.39 wrapper — market sector board, live sector rank, company tab for the open ticker."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.38 — 자료 기준일 · 섹터 순위."""',
+        '"""CANSLIM TERMINAL v14.39 — 시장 섹터 · 업종 순위 · 조회 종목 회사개요."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.38 · 각 탭 자료 기준일 · 시장 탭 섹터 순위")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.39 · 시장 섹터와 개별종목 업종 순위는 같은 시세 · 회사개요는 조회 종목")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -156,8 +156,8 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 EPS 3y/6q streak panel did not apply")'''
     new_k = '''    if "EPS_STREAK_V14_23" not in src or "def render_eps_streak" not in src:
         raise RuntimeError("v14.23 EPS 3y/6q streak panel did not apply")
-    if "COMPANY_TAB_V14_24" not in src or "def render_company_overview" not in src:
-        raise RuntimeError("v14.24 company overview tab did not apply")
+    if "COMPANY_TAB_V14_24" not in src or "render_company" not in src:
+        raise RuntimeError("v14.39 company tab did not apply")
     if "CHECKUP_BOOK_V14_24" not in src:
         raise RuntimeError("v14.24 checkup/pulse seed did not apply")
     if "CHECKUP_BOOK_V14_25" not in src:
@@ -206,11 +206,23 @@ def _mutate(src: str) -> str:
         "    try:\n        compile(src, str(_CACHE), \"exec\")\n",
         "    from pathlib import Path as _AsOfPath\n"
         "    _asof_root = _AsOfPath(__file__).resolve().parent\n"
+        "    if not (_asof_root / \"selfdesk\" / \"guard_old.txt\").exists():\n"
+        "        _asof_root = _AsOfPath.cwd()\n"
         "    _guard_old = (_asof_root / \"selfdesk\" / \"guard_old.txt\").read_text(encoding=\"utf-8\")\n"
         "    _guard_new = (_asof_root / \"selfdesk\" / \"guard_new.txt\").read_text(encoding=\"utf-8\")\n"
         "    if _guard_old not in src:\n"
         "        raise RuntimeError(\"v14.38 자료 기준일 패치 대상 없음\")\n"
         "    src = src.replace(_guard_old, _guard_new, 1)\n"
+        "    _sec_old = (_asof_root / \"selfdesk\" / \"sector_fn_old.txt\").read_text(encoding=\"utf-8\")\n"
+        "    _sec_new = (_asof_root / \"selfdesk\" / \"sector_fn_new.txt\").read_text(encoding=\"utf-8\")\n"
+        "    if _sec_old not in src:\n"
+        "        raise RuntimeError(\"v14.39 업종 순위 함수 대상 없음\")\n"
+        "    src = src.replace(_sec_old, _sec_new, 1)\n"
+        "    _old_card = 'c[3].markdown(card(\"업종 순위\", \"—\", \"업종 데이터 미수집(국내 미지원)\"), unsafe_allow_html=True)'\n"
+        "    _new_card = 'c[3].markdown(card(\"업종 순위\", \"—\", \"미국 11섹터에 이 업종 이름이 없거나 시세를 못 받았습니다. 시장 탭 섹터 표를 봅니다.\"), unsafe_allow_html=True)'\n"
+        "    if _old_card not in src:\n"
+        "        raise RuntimeError(\"v14.39 업종 카드 대상 없음\")\n"
+        "    src = src.replace(_old_card, _new_card, 1)\n"
         "    try:\n        compile(src, str(_CACHE), \"exec\")\n",
         "asof guard",
     )

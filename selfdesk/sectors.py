@@ -1,9 +1,10 @@
-"""US sector ranks from SPDR ETF daily bars. Rank is the 6-month return."""
+"""US sector ranks from one SPDR request. Rank is the 6-month price return."""
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
-
-from selfdesk.yahoo import fetch_daily
+import json
+import time
+from datetime import datetime, timezone
+from urllib.request import Request, urlopen
 
 SECTORS = (
     ("기술", "XLK"),
@@ -19,6 +20,30 @@ SECTORS = (
     ("유틸리티", "XLU"),
 )
 
+# Yahoo's English sector name -> SPDR
+ENGLISH = {
+    "Technology": "XLK",
+    "Communication Services": "XLC",
+    "Consumer Cyclical": "XLY",
+    "Consumer Defensive": "XLP",
+    "Energy": "XLE",
+    "Financial Services": "XLF",
+    "Financial": "XLF",
+    "Healthcare": "XLV",
+    "Industrials": "XLI",
+    "Basic Materials": "XLB",
+    "Real Estate": "XLRE",
+    "Utilities": "XLU",
+}
+
+_CACHE = {"at": 0.0, "data": None}
+_TTL = 1800
+
+
+def clear_sector_cache() -> None:
+    _CACHE["at"] = 0.0
+    _CACHE["data"] = None
+
 
 def trailing_return(bars: list, sessions: int) -> float | None:
     if not bars or len(bars) <= sessions:
@@ -31,7 +56,6 @@ def trailing_return(bars: list, sessions: int) -> float | None:
 
 
 def rank_sectors(bars_by_symbol: dict) -> dict:
-    """bars_by_symbol maps ETF ticker to daily bars, oldest first."""
     name_of = {etf: name for name, etf in SECTORS}
     rows = []
     dates = []
@@ -59,34 +83,68 @@ def rank_sectors(bars_by_symbol: dict) -> dict:
     rows.sort(key=sort_key, reverse=True)
     for i, row in enumerate(rows, start=1):
         row["rank"] = i
-    asof = max(dates) if dates else None
-    return {"rows": rows, "asof": asof, "basis": "6개월 수익률"}
+    return {"rows": rows, "asof": max(dates) if dates else None, "basis": "6개월 가격 수익률"}
+
+
+def fetch_sector_bars() -> dict:
+    symbols = ",".join(etf for _, etf in SECTORS)
+    url = (
+        "https://query1.finance.yahoo.com/v7/finance/spark"
+        f"?symbols={symbols}&range=1y&interval=1d"
+    )
+    req = Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
+    with urlopen(req, timeout=12) as res:
+        body = json.loads(res.read().decode("utf-8"))
+    result = ((body.get("spark") or {}).get("result")) or []
+    found = {}
+    for item in result:
+        resp = (item.get("response") or [None])[0] or {}
+        ts = resp.get("timestamp") or []
+        quote = ((resp.get("indicators") or {}).get("quote") or [{}])[0]
+        closes = quote.get("close") or []
+        bars = []
+        for i, unix in enumerate(ts):
+            close = closes[i] if i < len(closes) else None
+            if not close or close <= 0:
+                continue
+            bars.append(
+                {
+                    "date": datetime.fromtimestamp(unix, tz=timezone.utc).strftime("%Y-%m-%d"),
+                    "close": float(close),
+                }
+            )
+        if len(bars) >= 130:
+            found[item.get("symbol")] = bars
+    if len(found) < 8:
+        raise RuntimeError(f"섹터 시세가 {len(found)}개뿐입니다.")
+    return found
 
 
 def load_sector_ranks() -> dict:
-    symbols = [etf for _, etf in SECTORS]
-    found = {}
-    errors = []
-
-    def one(symbol):
-        return symbol, fetch_daily(symbol, "1y")
-
-    with ThreadPoolExecutor(max_workers=6) as pool:
-        for symbol, result in pool.map(lambda s: _safe(one, s), symbols):
-            if isinstance(result, Exception):
-                errors.append(f"{symbol}: {result}")
-            else:
-                found[symbol] = result
-    if len(found) < 8:
-        detail = " · ".join(errors[:3]) or "시세 없음"
-        raise RuntimeError("섹터 시세를 충분히 받지 못했습니다. " + detail)
-    ranked = rank_sectors(found)
-    ranked["errors"] = errors
+    now = time.time()
+    if _CACHE["data"] and now - _CACHE["at"] < _TTL:
+        return _CACHE["data"]
+    ranked = rank_sectors(fetch_sector_bars())
+    ranked["errors"] = []
+    _CACHE["at"] = now
+    _CACHE["data"] = ranked
     return ranked
 
 
-def _safe(fn, symbol):
-    try:
-        return fn(symbol)
-    except Exception as exc:
-        return symbol, exc
+def sector_for_stock(sector: str | None) -> dict | None:
+    """Same shape the individual-stock card already reads."""
+    board = load_sector_ranks()
+    rows = board.get("rows") or []
+    if not rows:
+        return None
+    etf = ENGLISH.get(sector or "") or dict(SECTORS).get(sector or "")
+    hit = next((row for row in rows if row["etf"] == etf), None)
+    if not hit or hit.get("r6") is None:
+        return None
+    return {
+        "rank": hit["rank"],
+        "total": len(rows),
+        "ret": hit["r6"],
+        "label": f'{sector} ({hit["etf"]}) · 6개월 {hit["r6"]:+.1f}% · 기준 {hit["date"]}',
+        "top": [row["name"] for row in rows[:3]],
+    }

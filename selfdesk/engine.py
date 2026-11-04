@@ -71,7 +71,9 @@ def score_index(symbol: str, bars: list[dict]) -> dict:
     n = len(active)
     cluster = 0
     for d in active:
-        i = next(k for k, b in enumerate(bars) if b["date"] == d["date"])
+        i = next((k for k, b in enumerate(bars) if b["date"] == d["date"]), None)
+        if i is None:
+            continue
         if len(bars) - 1 - i <= 9:
             cluster += 1
     today = any(d["date"] == last["date"] for d in active)

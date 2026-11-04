@@ -1,0 +1,16 @@
+@st.cache_data(ttl=21600, show_spinner=False)
+def load_sector_rank(market, sector=None):
+    try:
+        if market == "US" and HAS_YF and sector in SECTOR_ETF:
+            px = yf.download(list(SECTOR_ETF.values()), period="200d", progress=False,
+                             auto_adjust=True)["Close"].dropna(how="all", axis=1)
+            r = ((px.iloc[-1] / px.iloc[-126] - 1) * 100).sort_values(ascending=False)
+            etf = SECTOR_ETF[sector]
+            if etf in r.index:
+                inv = {v: k for k, v in SECTOR_ETF.items()}
+                return {"rank": int(list(r.index).index(etf)) + 1, "total": len(r),
+                        "ret": float(r[etf]), "label": f"{sector} ({etf})",
+                        "top": [inv.get(x, x) for x in r.index[:3]]}
+    except Exception:
+        pass
+    return None
