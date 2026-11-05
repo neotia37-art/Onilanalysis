@@ -1,0 +1,12 @@
+    if not CTX.get("ok"):
+        _rows = [r for r in (CTX.get("log") or []) if isinstance(r, (list, tuple)) and len(r) >= 2]
+        _got = any(str(r[0]) == "일봉" and str(r[1]) == "성공" for r in _rows)
+        if _got:
+            st.error("시세는 받았습니다. 거래일이 너무 짧거나 그 다음 단계에서 멈춰 화면을 열지 못했습니다. 티커 형식 문제가 아닙니다.")
+        else:
+            st.error("시세를 가져오지 못했습니다. 한국 종목은 6자리 숫자(005930), 해외는 티커(NVDA)로 입력하세요.")
+        if CTX.get("log"):
+            st.markdown(table(["항목", "상태", "내용"], CTX["log"]), unsafe_allow_html=True)
+    elif not D:
+        if CTX.get("log"):
+            st.markdown(table(["항목", "상태", "내용"], CTX["log"]), unsafe_allow_html=True)

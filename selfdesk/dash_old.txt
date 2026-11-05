@@ -1,0 +1,5 @@
+    if not CTX.get("ok") or not D:
+        st.error("시세를 가져오지 못했습니다. 한국 종목은 6자리 숫자(005930), 해외는 티커(NVDA)로 "
+                 "입력하세요.")
+        if CTX.get("log"):
+            st.markdown(table(["항목", "상태", "내용"], CTX["log"]), unsafe_allow_html=True)

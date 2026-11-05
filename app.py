@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.41 wrapper — company tab no longer recurses through step_header."""
+"""CANSLIM TERMINAL v14.42 wrapper — a short listing is not a failed price fetch."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.41 — 회사개요 재귀 호출을 끊었다."""',
+        '"""CANSLIM TERMINAL v14.42 — 짧은 상장 이력은 시세 실패가 아니다."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.41 · 회사개요 재귀 오류 수정")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.42 · 120일 미만 종목도 시세가 있으면 연다")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -223,6 +223,21 @@ def _mutate(src: str) -> str:
         "    if _old_card not in src:\n"
         "        raise RuntimeError(\"v14.39 업종 카드 대상 없음\")\n"
         "    src = src.replace(_old_card, _new_card, 1)\n"
+        "    _gate_old = (_asof_root / \"selfdesk\" / \"gate_old.txt\").read_text(encoding=\"utf-8\")\n"
+        "    _gate_new = (_asof_root / \"selfdesk\" / \"gate_new.txt\").read_text(encoding=\"utf-8\")\n"
+        "    if _gate_old not in src:\n"
+        "        raise RuntimeError(\"v14.42 짧은 이력 분기 대상 없음\")\n"
+        "    src = src.replace(_gate_old, _gate_new, 1)\n"
+        "    _dash_old = (_asof_root / \"selfdesk\" / \"dash_old.txt\").read_text(encoding=\"utf-8\")\n"
+        "    _dash_new = (_asof_root / \"selfdesk\" / \"dash_new.txt\").read_text(encoding=\"utf-8\")\n"
+        "    if _dash_old not in src:\n"
+        "        raise RuntimeError(\"v14.42 대시보드 문구 대상 없음\")\n"
+        "    src = src.replace(_dash_old, _dash_new, 1)\n"
+        "    _short_old = \"        chg = (price / float(df[\\\"Close\\\"].iloc[-2]) - 1) * 100\\n        if CTX.get(\\\"price_chk\\\", {}).get(\\\"ok\\\") is False:\\n\"\n"
+        "    _short_new = \"        chg = (price / float(df[\\\"Close\\\"].iloc[-2]) - 1) * 100\\n        if len(df) < 120:\\n            st.info(f\\\"거래일 {len(df)}일입니다. 시세는 정상입니다. 120일이 안 되어 200일선과 12개월 RS는 비거나 약합니다.\\\")\\n        if CTX.get(\\\"price_chk\\\", {}).get(\\\"ok\\\") is False:\\n\"\n"
+        "    if _short_old not in src:\n"
+        "        raise RuntimeError(\"v14.42 짧은 이력 안내 대상 없음\")\n"
+        "    src = src.replace(_short_old, _short_new, 1)\n"
         "    try:\n        compile(src, str(_CACHE), \"exec\")\n",
         "asof guard",
     )

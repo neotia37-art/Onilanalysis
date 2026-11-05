@@ -1,0 +1,4 @@
+    if dfd is None or len(dfd) < 120:
+        ctx["log"] = log
+        ctx["name"] = tk
+        return ctx

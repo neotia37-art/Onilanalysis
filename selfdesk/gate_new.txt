@@ -1,0 +1,8 @@
+    if dfd is None or len(dfd) < 30:
+        ctx["log"] = log
+        ctx["name"] = tk
+        if dfd is not None and len(dfd) > 0:
+            ctx["log"] = list(log) + [("분석", "실패", f"거래일 {len(dfd)}일. 30일 미만이라 화면을 열지 않습니다. 티커 형식 문제가 아닙니다.")]
+        return ctx
+    if len(dfd) < 120:
+        log.append(("이력", "부분", f"거래일 {len(dfd)}일(120일 미만). 시세는 받았습니다. 200일선과 12개월 RS는 비거나 약합니다."))
