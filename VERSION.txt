@@ -1,4 +1,10 @@
-CANSLIM TERMINAL v14.42
+CANSLIM TERMINAL v14.43
+Quality Score (Comp 근사)와 Timing/Buy Checklist Score를 분리.
+11/6 30종목 비교 반영: Quality는 시장·베이스 페널티를 줄여 IBD Comp 순위 상관을 높이는 쪽.
+A/D는 13주 업/다운 거래량비로 대리 개선.
+기존 Timing 점수는 그대로 (지금 살 자리인지).
+2026-11-10 KST.
+v14.42
 일봉을 받았는데 120일 미만이면 시세 실패로 보이던 것을 고쳤다.
 30일 이상이면 화면을 열고, 200일선과 12개월 RS는 비어 있을 수 있다고 적는다.
 2026-11-05 KST.
