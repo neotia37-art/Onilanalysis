@@ -1,13 +1,12 @@
-CANSLIM TERMINAL v14.44
+CANSLIM TERMINAL v14.45
+RS·PEG 항상 표시. 짧은 이력(예: ALAB)도 RS 대리가 나오게 개선.
+1년 우선, 없으면 6개월/3개월 수익률을 보수적으로 1–99에 매핑.
+PEG는 yfinance·컨텍스트 우선, 없으면 명확히 "—"로 표시.
+2026-11-10 KST.
+v14.44
 IBD 의존도 축소 방향: 수치·RS·점수 계산에 방어적 가드 추가.
 safe_div / safe_ret / robust_rs_proxy 로 0나누기·NaN 방지.
 sticky_bar 오류 잡아 경고로 바꾸고 계속 동작.
 앱 자체 계산 우선 안내 표시. IBD 자료는 참고용.
 래퍼는 v14.42 전체 변형(자체 분산일·섹터·기준일·짧은이력) 복원 + quality43/self44 로드.
-2026-11-10 KST.
-v14.43
-Quality Score (Comp 근사)와 Timing/Buy Checklist Score를 분리.
-11/6 30종목 비교 반영: Quality는 시장·베이스 페널티를 줄여 IBD Comp 순위 상관을 높이는 쪽.
-A/D는 13주 업/다운 거래량비로 대리 개선.
-기존 Timing 점수는 그대로 (지금 살 자리인지).
 2026-11-10 KST.
