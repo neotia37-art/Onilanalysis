@@ -1,12 +1,6 @@
-CANSLIM TERMINAL v14.45
-RS·PEG 항상 표시. 짧은 이력(예: ALAB)도 RS 대리가 나오게 개선.
-1년 우선, 없으면 6개월/3개월 수익률을 보수적으로 1–99에 매핑.
-PEG는 yfinance·컨텍스트 우선, 없으면 명확히 "—"로 표시.
-2026-11-10 KST.
-v14.44
-IBD 의존도 축소 방향: 수치·RS·점수 계산에 방어적 가드 추가.
-safe_div / safe_ret / robust_rs_proxy 로 0나누기·NaN 방지.
-sticky_bar 오류 잡아 경고로 바꾸고 계속 동작.
-앱 자체 계산 우선 안내 표시. IBD 자료는 참고용.
-래퍼는 v14.42 전체 변형(자체 분산일·섹터·기준일·짧은이력) 복원 + quality43/self44 로드.
+CANSLIM TERMINAL v14.46
+RARS (Recent Acceleration RS) 3버전 도입.
+1. RARS 기본  2. RARS+변동성패널티  3. SPY대비 초과
+가중치 최종: 1m22% / 3m48% / 6m22% / 12m8% + 가속도보너스, 패널티강도 0.45
+앱 내 expander로 상세 설명 제공.
 2026-11-10 KST.
