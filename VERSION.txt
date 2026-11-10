@@ -1,6 +1,5 @@
 CANSLIM TERMINAL v14.46
-RARS (Recent Acceleration RS) 3버전 도입.
-1. RARS 기본  2. RARS+변동성패널티  3. SPY대비 초과
-가중치 최종: 1m22% / 3m48% / 6m22% / 12m8% + 가속도보너스, 패널티강도 0.45
-앱 내 expander로 상세 설명 제공.
+RARS 3버전 도입 (1.기본 2.변동성패널티 3.SPY대비초과).
+가중치: 1m22%/3m48%/6m22%/12m8% + 가속도, 패널티 0.45.
+앱 내 상세 설명 expander 제공.
 2026-11-10 KST.
