@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.45 wrapper — RS/PEG always-on + self-reliant."""
+"""CANSLIM TERMINAL v14.46 wrapper — RARS 3-version + RS/PEG."""
 from __future__ import annotations
 
 import urllib.request
@@ -10,7 +10,6 @@ _V23 = (
     "e5807af6c4ce06eba7b8ee1a59fa72c9b42b4458/app.py"
 )
 _CACHE = Path("/tmp/canslim_v14_31_loader.py")
-
 
 def _sub(src: str, old: str, new: str, what: str) -> str:
     if old not in src:
@@ -263,7 +262,6 @@ def _mutate(src: str) -> str:
     )
     return src
 
-
 def _boot():
     with urllib.request.urlopen(_V23, timeout=45) as r:
         raw = r.read().decode("utf-8")
@@ -271,7 +269,6 @@ def _boot():
     compile(src, str(_CACHE), "exec")
     _CACHE.write_text(src, encoding="utf-8")
     return src
-
 
 _src = _boot()
 exec(compile(_src, str(_CACHE), "exec"), globals(), globals())
