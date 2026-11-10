@@ -19,15 +19,148 @@ def _sub(src: str, old: str, new: str, what: str) -> str:
 
 
 def _mutate(src: str) -> str:
-    # (Full mutate logic from restored v14.45 + RARS + advice tab)
-    # Key additions: rs46 fetch, advice fetch, TABS[14] inject, extended TABS list
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
         '"""CANSLIM TERMINAL v14.47 — RARS + 오닐의 한마디."""',
         "doc",
     )
-    # ... remaining mutations preserved from known-good + advice tab
+    src = _sub(
+        src,
+        'Path("/tmp/canslim_v14_23_patched.py")',
+        'Path("/tmp/canslim_v14_31_patched.py")',
+        "cache",
+    )
+    src = _sub(
+        src,
+        '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  ", "  오닐의 한마디  "])\nst.caption("CANSLIM TERMINAL v14.47 · RARS + 오닐의 한마디")',
+        "tabs",
+    )
+    # Checkup form suppress
+    src = src.replace('    ck_u = _fetch("ibd_checkup_ui.py")', '    ck_u = ""  # Checkup form hidden', 1)
+    src = src.replace('            src = src[:i0] + ck_u.rstrip() + "\\n\\n" + src[i1:]', '            pass', 1)
+    src = src.replace('        src = src.replace(a_65b, ck_u + "\\n" + a_65b, 1)', '        pass', 1)
+
+    # Fetch block with rs46 + advice
+    old_f = '''    book10 = _fetch("ibd_book_v14_10.py")
+    drill = _fetch("ibd_ftd_drill_tab.py")'''
+    new_f = '''    book10 = _fetch("ibd_book_v14_10.py")
+    try:
+        book24 = _fetch("ibd_book_v14_24.py")
+    except Exception:
+        book24 = ""
+    try:
+        book25 = _fetch("ibd_book_v14_25.py")
+    except Exception:
+        book25 = ""
+    try:
+        book26 = _fetch("ibd_book_v14_26.py")
+    except Exception:
+        book26 = ""
+    try:
+        book27 = _fetch("ibd_book_v14_27.py")
+    except Exception:
+        book27 = ""
+    try:
+        book28 = _fetch("ibd_book_v14_28.py")
+    except Exception:
+        book28 = ""
+    try:
+        fixes28 = _fetch("ibd_fixes_v14_28.py")
+    except Exception:
+        fixes28 = ""
+    try:
+        overlay28 = _fetch("ibd_overlay_labels_v14_28.py")
+    except Exception:
+        overlay28 = ""
+    try:
+        pivot29 = _fetch("ibd_pivot_sell_v14_29.py")
+    except Exception:
+        pivot29 = ""
+    try:
+        earnvol28 = _fetch("ibd_earn_vol_v14_28.py")
+    except Exception:
+        earnvol28 = ""
+    try:
+        cleanup28 = _fetch("ibd_cleanup_v14_28.py")
+    except Exception:
+        cleanup28 = ""
+    try:
+        dd28 = _fetch("ibd_dd_compare_v14_28.py")
+    except Exception:
+        dd28 = ""
+    try:
+        latest28 = _fetch("ibd_latest_update_v14_28.py")
+    except Exception:
+        latest28 = ""
+    try:
+        uiclean28 = _fetch("ibd_ui_cleanup_v14_28.py")
+    except Exception:
+        uiclean28 = ""
+    try:
+        pulsejson29 = _fetch("ibd_pulse_json_v14_29.py")
+    except Exception:
+        pulsejson29 = ""
+    try:
+        prio31 = _fetch("ibd_priority_fixes_v14_31.py")
+    except Exception:
+        prio31 = ""
+    try:
+        quality43 = _fetch("ibd_quality_timing_v14_43.py")
+    except Exception:
+        quality43 = ""
+    try:
+        self44 = _fetch("self_reliant_v14_44.py")
+    except Exception:
+        self44 = ""
+    try:
+        rs45 = _fetch("rs_peg_v14_45.py")
+    except Exception:
+        rs45 = ""
+    try:
+        rs46 = _fetch("rs_rars_v14_46.py")
+    except Exception:
+        rs46 = ""
+    try:
+        advice = _fetch("oneil_advice_tab_v14_47.py")
+    except Exception:
+        advice = ""
+    try:
+        company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
+    except Exception:
+        try:
+            company = _fetch("ibd_company_tab_v14_24.py")
+        except Exception:
+            company = ""
+    try:
+        relval = _fetch("ibd_relval_tab_v14_30.py")
+    except Exception:
+        relval = ""
+    drill = _fetch("ibd_ftd_drill_tab.py")'''
+    src = src.replace(old_f, new_f, 1)
+
+    # Book concat with rs46 + advice
+    old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot29 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + pulsejson29 + "\\n\\n" + prio31 + "\\n\\n" + quality43 + "\\n\\n" + self44 + "\\n\\n" + rs45 + "\\n\\n" + rs46 + "\\n\\n" + advice + "\\n\\n" + eps_st'
+    src = src.replace(old_c, new_c, 1)
+
+    # Tab inject for advice
+    old_t = '''    if "with TABS[11], guard(\\"FTD훈련\\")" not in src:
+        src = src.rstrip() + "\\n\\n" + drill + "\\n"'''
+    new_t = '''    if "with TABS[11], guard(\\"FTD훈련\\")" not in src:
+        src = src.rstrip() + "\\n\\n" + drill + "\\n"
+    if "with TABS[12], guard(\\"회사개요\\")" not in src:
+        if company and "COMPANY_TAB_V14_24" in company:
+            src = src.rstrip() + "\\n\\n" + company + "\\n"
+    if "with TABS[13], guard(\\"상대밸류\\")" not in src:
+        if relval and "RELVAL_TAB_V14_30" in relval:
+            src = src.rstrip() + "\\n\\n" + relval + "\\n"
+    if "with TABS[14], guard(\\"오닐의 한마디\\")" not in src:
+        if advice and "ONEIL_ADVICE_TAB" in advice:
+            src = src.rstrip() + "\\n\\n" + advice + "\\n"'''
+    src = src.replace(old_t, new_t, 1)
+
     return src
 
 def _boot():
