@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""CANSLIM TERMINAL v14.44 wrapper — Self-reliant guards + Quality/Timing."""
+"""CANSLIM TERMINAL v14.45 wrapper — RS/PEG always-on + self-reliant."""
 from __future__ import annotations
 
 import urllib.request
@@ -22,7 +22,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"""CANSLIM TERMINAL v14.23 — 개별종목 3년·6분기 EPS + 최우선 뱃지."""',
-        '"""CANSLIM TERMINAL v14.44 — Self-reliant + Quality/Timing."""',
+        '"""CANSLIM TERMINAL v14.45 — RS/PEG always-on."""',
         "v14.23 docstring",
     )
     src = _sub(
@@ -34,7 +34,7 @@ def _mutate(src: str) -> str:
     src = _sub(
         src,
         '"  기관동향  ", "  FTD훈련  "])\nst.caption("CANSLIM TERMINAL v14.23 · 3년·6분기 EPS · 최우선 뱃지")',
-        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.44 · 자체계산 우선")',
+        '"  기관동향  ", "  FTD훈련  ", "  회사개요  ", "  상대밸류  "])\nst.caption("CANSLIM TERMINAL v14.45 · RS/PEG 항상 표시")',
         "v14.23 TABS list + caption",
     )
     # Completely suppress Checkup manual form injection
@@ -125,6 +125,10 @@ def _mutate(src: str) -> str:
     except Exception:
         self44 = ""
     try:
+        rs45 = _fetch("rs_peg_v14_45.py")
+    except Exception:
+        rs45 = ""
+    try:
         company = _fetch("ibd_company_profiles_v14_24.py") + "\\n" + _fetch("ibd_company_tab_v14_24.py")
     except Exception:
         try:
@@ -140,7 +144,7 @@ def _mutate(src: str) -> str:
         raise RuntimeError("v14.23 book10 fetch block missing")
     src = src.replace(old_f, new_f, 1)
     old_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + eps_st'
-    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot29 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + pulsejson29 + "\\n\\n" + prio31 + "\\n\\n" + quality43 + "\\n\\n" + self44 + "\\n\\n" + eps_st'
+    new_c = '    book = book4 + "\\n\\n" + book5 + "\\n\\n" + book6 + "\\n\\n" + book8 + "\\n\\n" + book10 + "\\n\\n" + book24 + "\\n\\n" + book25 + "\\n\\n" + book26 + "\\n\\n" + book27 + "\\n\\n" + book28 + "\\n\\n" + fixes28 + "\\n\\n" + overlay28 + "\\n\\n" + pivot29 + "\\n\\n" + earnvol28 + "\\n\\n" + cleanup28 + "\\n\\n" + dd28 + "\\n\\n" + latest28 + "\\n\\n" + uiclean28 + "\\n\\n" + pulsejson29 + "\\n\\n" + prio31 + "\\n\\n" + quality43 + "\\n\\n" + self44 + "\\n\\n" + rs45 + "\\n\\n" + eps_st'
     if old_c not in src:
         raise RuntimeError("v14.23 book concat missing")
     src = src.replace(old_c, new_c, 1)
@@ -183,7 +187,9 @@ def _mutate(src: str) -> str:
     if "RELVAL_TAB_V14_30" not in src or "def render_relval_tab" not in src:
         raise RuntimeError("v14.30 relative valuation tab did not apply")
     if "compute_quality_score" not in src:
-        raise RuntimeError("v14.43 quality score patch did not apply")'''
+        raise RuntimeError("v14.43 quality score patch did not apply")
+    if "better_rs_proxy" not in src:
+        raise RuntimeError("v14.45 RS/PEG patch did not apply")'''
     if old_k not in src:
         raise RuntimeError("v14.23 EPS check missing")
     src = src.replace(old_k, new_k, 1)
